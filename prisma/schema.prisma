@@ -1,0 +1,148 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+generator erd {
+  provider = "prisma-erd-generator"
+  theme = "forest"
+  includeRelationFromFields = true
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model users {
+  user_id                       Int @id @default(autoincrement())
+  admin                         Boolean
+  name                          String
+  specifications                specifications[]
+  reports                       reports[]
+}
+
+model series {
+  series_id                     Int @id @default(autoincrement())
+  name                          String @unique
+  tool_id                       Int
+  flute_count                   Int
+  helix_angle                   Int
+  tool_series_file_name         String
+  tool_series_inputs            String[]
+  tool_series_output_range      String
+  tool_series_input_range       String
+
+  tools                         tools @relation(fields: [tool_id], references: [tool_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_tool_id")
+}   
+
+model tools {
+  tool_id                       Int @id @default(autoincrement())
+  name                          String @unique
+  series                        series[]
+  tool_inputs                   tool_inputs[]
+  tool_input_categories         tool_input_categories[]
+}
+
+model tool_inputs {
+  tool_input_id                 Int @id @default(autoincrement())
+  tool_id                       Int
+  tool_input_category_id        Int
+  client_name                   String
+  type                          String
+  property_name                 String
+  group                         Int?
+  order                         Int?
+  required                      Boolean
+  options                       String[] @default([])
+  tool_input_rules              tool_input_rules[] @relation("tool_input_id")
+  tool_input_dependency_rules_1 tool_input_rules[] @relation("tool_input_dependency_id_1")
+  tool_input_dependency_rules_2 tool_input_rules[] @relation("tool_input_dependency_id_2")
+
+  tools                         tools @relation(fields: [tool_id], references: [tool_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_tool_id")
+  tool_input_categories         tool_input_categories @relation(fields: [tool_input_category_id], references: [tool_input_category_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_tool_input_category_id")
+}
+
+model tool_input_rules {
+  tool_input_rule_id            Int @id @default(autoincrement())
+  tool_input_id                 Int
+  tool_input_dependency_id_1    Int
+  tool_input_dependency_id_2    Int?
+  rule_type                     String // true, greater_than_zero, etc.
+  disable                       Boolean @default(false) // if true, when this rule validates to true, the input is disabled
+  check_value                   String?
+
+  tool_inputs                   tool_inputs @relation("tool_input_id", fields: [tool_input_id], references: [tool_input_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_tool_input_id")
+  tool_dependency_inputs_1      tool_inputs @relation("tool_input_dependency_id_1", fields: [tool_input_dependency_id_1], references: [tool_input_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_tool_input_dependency_id_1")
+  tool_dependency_inputs_2      tool_inputs? @relation("tool_input_dependency_id_2", fields: [tool_input_dependency_id_2], references: [tool_input_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_tool_input_dependency_id_2")
+
+}
+
+model tool_input_categories {
+  tool_input_category_id        Int @id @default(autoincrement())
+  tool_id                       Int
+  name                          String
+  display_title                 String
+  tool_inputs                   tool_inputs[]
+
+  tools                         tools @relation(fields: [tool_id], references: [tool_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_tool_id")
+}
+
+model tool_inputs_common {
+  tool_input_id                 Int @id @default(autoincrement())
+  client_name                   String
+  property_name                 String
+  category_name                 String
+  type                          String
+  group                         Int?
+  order                         Int?
+
+  tool_input_common_options     tool_input_common_options[]
+}
+
+model tool_input_common_options {
+  tool_input_option_id          Int @id @default(autoincrement())
+  tool_input_id                 Int
+
+  tool_inputs_common            tool_inputs_common @relation(fields: [tool_input_id], references: [tool_input_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_tool_input_id")
+}
+
+model specifications {
+  specification_id              Int @id @default(autoincrement())
+  user_id                       Int
+  status                        String
+  data                          Json
+  name                          String
+  path                          String
+  error                         String
+  reports                       reports[]
+
+  users                         users @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_id")
+}
+
+model reports {
+  report_id                     Int @id @default(autoincrement()) 
+  specification_id              Int?
+  user_id                       Int
+  summary                       String?
+  description                   String?
+  resolved                      Boolean @default(false)
+
+  specifications                specifications? @relation(fields: [specification_id], references: [specification_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_specification_id")
+  users                         users @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_id")
+}
+
+model version_history {
+  version_id                    Int @id @default(autoincrement())
+  version_number                String
+  changelog                     String
+  active                        Boolean
+}
+
+model custom_params {
+  param_id                      Int @id @default(autoincrement())
+  title                         String @unique
+  value                         String
+}
