@@ -6,8 +6,11 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 app.use(bodyParser.json())
+let origin;
+if (process.env.NODE_ENV === 'production') origin='http://deploy-mah4vh4n:3000'
+else origin = 'http://localhost:3000'
 const corsOptions = {
-    origin: 'http://localhost:3000'
+    origin
 }
 app.use(cors(corsOptions));
 
