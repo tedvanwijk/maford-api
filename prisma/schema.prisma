@@ -43,13 +43,14 @@ model series_inputs {
   series_input_id               Int @id @default(autoincrement())
   series_id                     Int
   name                          String
-  property_name                 String
+  property_name                 String?
   type                          String
   value                         String?
-  options                       String[] @default([])
   index                         Int
 
   series                        series @relation(fields: [series_id], references: [series_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_series_id")
+
+  @@unique([series_id, index], name: "seriesIdIndex")
 }
 
 model tools {

@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 
 app.use(bodyParser.json())
 let origin;
-if (process.env.NODE_ENV === 'production') origin='http://deploy-mah4vh4n:3000'
+if (process.env.NODE_ENV === 'production') origin = 'http://deploy-mah4vh4n:3000'
 else origin = 'http://localhost:3000'
 const corsOptions = {
     origin
@@ -43,12 +43,114 @@ app.get('/series/:series_id', async (req, res) => {
     return res.json(result);
 })
 
-app.post('/series/new', async (req, res) => {
+app.put('/series/:series_id', async (req, res) => {
+    let updatedSeriesData = {};
+    let updatedInputData = Array(req.body.seriesInputLength).fill(0).map(() => ({}));
+    // first loop filters out non-input series data and puts the series input data into an ordered array so all values for 1 row are in a single object
+    for (let [key, value] of Object.entries(req.body)) {
+        // console.log(key, value);
+        let seriesInputArray = key.split('__');
+        if (seriesInputArray.length === 1) {
+            // if the lenght of this array is 1, it is not a series input but just a series column
+            if (!isNaN(value)) value = parseFloat(value);
+            updatedSeriesData[key] = value;
+            continue;
+        }
+        updatedInputData[parseInt(seriesInputArray[0])][seriesInputArray[1]] = value;
+    }
+
+    let seriesInputQueries = [];
+    // second loop turns each array entry (which is an object containing name etc.) into a prisma query
+    for (let i = 0; i < req.body.seriesInputLength; i++) {
+        seriesInputQueries.push(
+            prisma.series_inputs.upsert({
+                where: {
+                    seriesIdIndex: {
+                        index: i,
+                        series_id: parseInt(req.params.series_id)
+                    }
+                },
+                update: updatedInputData[i],
+                create: {
+                    ...updatedInputData[i],
+                    index: i,
+                    series_id: parseInt(req.params.series_id)
+                }
+            })
+        )
+    }
+
+    if (req.body.oldSeriesInputLength > req.body.seriesInputLength) {
+        // if true it means inputs have been removed
+        const removedInputCount = req.body.oldSeriesInputLength - req.body.seriesInputLength;
+        for (let i = 0; i < removedInputCount; i++) {
+            seriesInputQueries.push(
+                prisma.series_inputs.delete({
+                    where: {
+                        seriesIdIndex: {
+                            index: (req.body.oldSeriesInputLength - (i + 1)),
+                            series_id: parseInt(req.params.series_id)
+                        }
+                    }
+                })
+            )
+        }
+    }
+
+    delete updatedSeriesData.seriesInputLength;
+    delete updatedSeriesData.oldSeriesInputLength;
+    const result = await prisma.$transaction([
+        prisma.series.update({
+            where: {
+                series_id: parseInt(req.params.series_id)
+            },
+            data: updatedSeriesData
+        }),
+        ...seriesInputQueries
+    ])
+
+    res.status(200).json(result[0]);
+})
+
+app.post('/series/:tool_id/new', async (req, res) => {
+    let updatedSeriesData = {};
+    let updatedInputData = Array(req.body.seriesInputLength).fill(0).map(() => ({}));
+    // first loop filters out non-input series data and puts the series input data into an ordered array so all values for 1 row are in a single object
+    for (let [key, value] of Object.entries(req.body)) {
+        // console.log(key, value);
+        let seriesInputArray = key.split('__');
+        if (seriesInputArray.length === 1) {
+            // if the lenght of this array is 1, it is not a series input but just a series column
+            if (!isNaN(value)) value = parseFloat(value);
+            updatedSeriesData[key] = value;
+            continue;
+        }
+        updatedInputData[parseInt(seriesInputArray[0])][seriesInputArray[1]] = value;
+    }
+
+    updatedInputData.forEach((e, i) => {e.index = i});
+
+    delete updatedSeriesData.seriesInputLength;
     const result = await prisma.series.create({
         data: {
-            
+            ...updatedSeriesData,
+            tool_id: parseInt(req.params.tool_id),
+            series_inputs: {
+                create: updatedInputData
+            }
         }
-    })
+    });
+
+    return res.status(201).json(result);
+})
+
+app.get('/series/tool_id/:tool_id', async (req, res) => {
+    const result = await prisma.series.findMany({
+        where: {
+            tool_id: parseInt(req.params.tool_id)
+        }
+    });
+    return res.json(result);
 })
 
 app.get('/series/:series_id/inputs', async (req, res) => {
@@ -210,6 +312,8 @@ app.post('/specifications/new', async (req, res) => {
         })
         return res.status(200).json(result)
     } else {
+        const additionalSpecParameters = await getAdditionalSpecificationParameters(req.body);
+        req.body.outputPath = additionalSpecParameters.OutputPath;
         const result = await prisma.specifications.create({
             data: {
                 user_id: req.body.user_id,
@@ -220,7 +324,6 @@ app.post('/specifications/new', async (req, res) => {
                 error: ''
             }
         });
-        const additionalSpecParameters = await getAdditionalSpecificationParameters(req.body);
         req.body.ToolType = additionalSpecParameters.ToolTypeName;
         const specData = {
             ...additionalSpecParameters,
@@ -257,13 +360,13 @@ function convertDbNameToParamName(input) {
 }
 
 async function getAdditionalSpecificationParameters(data) {
-    console.log(data)
+    // console.log(data)
     // both the tool series information (flute count, etc.) and custom parameters (master path, etc.) can change at any time, so look up these values when a specification is about to be generated
     let [customParams, seriesData, toolData] = await prisma.$transaction([
         prisma.custom_params.findMany({
             where: {
                 title: {
-                    in: ['MasterPath', 'ExecutablePath', 'ToolSeriesPath', 'DimensionFileName', 'ToleranceFileName']
+                    in: ['MasterPath', 'ExecutablePath', 'ToolSeriesPath', 'DimensionFileName', 'ToleranceFileName', 'OutputPath']
                 }
             }
         }),
@@ -314,11 +417,13 @@ async function checkPendingSpecifications() {
     if (specs.length === 0) return;
     const spec = specs[0];
     const specDbData = JSON.parse(spec.data);
+    const specDataExecutable = { ...specDbData };
     const additionalSpecParameters = await getAdditionalSpecificationParameters(specDbData);
-    specDbData.ToolType = additionalSpecParameters.ToolTypeName;
+    specDataExecutable.ToolType = additionalSpecParameters.ToolTypeName;
+    specDbData.outputPath = additionalSpecParameters.OutputPath;
     const specData = {
         ...additionalSpecParameters,
-        ...specDbData,
+        ...specDataExecutable,
         PartFileName: `TOOL_V2_GENERATED_${spec.specification_id}`,
         DrawingFileName: `DRAWING_V2_GENERATED_${spec.specification_id}`,
         SpecificationNumber: spec.specification_id
@@ -329,7 +434,8 @@ async function checkPendingSpecifications() {
             specification_id: spec.specification_id
         },
         data: {
-            status: 'generating'
+            status: 'generating',
+            data: JSON.stringify(specDbData)
         }
     })
     execFile(specData.ExecutablePath, [parameterString], (err, data) => {
@@ -348,8 +454,45 @@ app.get('/users', async (req, res) => {
             active: true
         }
     })
-    
+
     res.json(users);
+})
+
+app.post('/users/new', async (req, res) => {
+    const result = await prisma.users.create({
+        data: {
+            name: req.body.name,
+            admin: false
+        }
+    });
+    return res.status(201).json(result);
+})
+
+// #endregion
+
+// #region custom_params
+
+app.get('/custom_params', async (req, res) => {
+    const result = await prisma.custom_params.findMany({});
+    res.status(200).json(result);
+})
+
+app.put('/custom_params', async (req, res) => {
+    let queries = [];
+    for (let i = 0; i < req.body; i++) {
+        queries.push(
+            prisma.custom_params.update({
+                where: {
+                    title: req.body[i].title
+                },
+                data: {
+                    value: req.body[i].title
+                }
+            })
+        )
+    }
+    const result = await prisma.$transaction(queries);
+    return res.status(200).json(result);
 })
 
 // #endregion
