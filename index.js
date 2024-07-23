@@ -128,7 +128,7 @@ app.post('/series/:tool_id/new', async (req, res) => {
         updatedInputData[parseInt(seriesInputArray[0])][seriesInputArray[1]] = value;
     }
 
-    updatedInputData.forEach((e, i) => {e.index = i});
+    updatedInputData.forEach((e, i) => { e.index = i });
 
     delete updatedSeriesData.seriesInputLength;
     const result = await prisma.series.create({
@@ -252,12 +252,23 @@ app.get('/tool/:tool_id/inputs', async (req, res) => {
 // #region specifications
 
 app.get('/specifications', async (req, res) => {
-    let { page } = req.query;
-    page = parseInt(page);
+    let { p, u, s } = req.query;
+    let filterUser = !(u === 'null' || u === null | u === -1);
+    let search = s !== '';
+    let page = parseInt(p);
     const specsPerPage = 15;
     const [count, specs] = await prisma.$transaction([
-        prisma.specifications.count(),
+        prisma.specifications.count({
+            where: {
+                ...(filterUser ? { user_id: parseInt(u) } : {}),
+                ...(search ? {name: {contains: s}} : {})
+            }
+        }),
         prisma.specifications.findMany({
+            where: {
+                ...(filterUser ? { user_id: parseInt(u) } : {}),
+                ...(search ? {name: {contains: s}} : {})
+            },
             select: {
                 specification_id: true,
                 users: true,
