@@ -521,7 +521,11 @@ app.post('/reports/new', async (req, res) => {
 })
 
 app.get('/versions', async (req, res) => {
-    const result = await prisma.version_history.findMany({});
+    const result = await prisma.version_history.findMany({
+        orderBy: {
+            version_id: 'desc'
+        }
+    });
     return res.json(result);
 })
 
