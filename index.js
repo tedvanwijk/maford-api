@@ -173,6 +173,42 @@ app.get('/tools', async (req, res) => {
     res.status(200).json(result);
 })
 
+app.get('/tools/:tool_id/inputs/by_type', async (req, res) => {
+    const result = await prisma.tool_inputs.findMany({
+        where: {
+            tool_id: parseInt(req.params.tool_id),
+            type: {
+                in: ['decimal', 'toggle']
+            }
+        },
+        select: {
+            client_name: true,
+            property_name: true,
+            type: true
+        },
+        orderBy: [
+            {
+                type: 'asc'
+            },
+            {
+                client_name: 'asc'
+            }
+        ]
+    });
+
+    let decimalInputs = [];
+    let toggleInputs = [];
+    let decimalEndFound = false;
+
+    for (let i = 0; i < result.length; i++) {
+        if (result[i].type === 'toggle') decimalEndFound = true;
+        if (!decimalEndFound) decimalInputs.push(result[i]);
+        else toggleInputs.push(result[i]);
+    }
+
+    res.status(200).json({decimalInputs, toggleInputs});
+})
+
 app.get('/tool/:tool_id/inputs', async (req, res) => {
 
     let toolInputs, toolCategories, toolInputRules, commonToolInputs;
@@ -261,13 +297,13 @@ app.get('/specifications', async (req, res) => {
         prisma.specifications.count({
             where: {
                 ...(filterUser ? { user_id: parseInt(u) } : {}),
-                ...(search ? {name: {contains: s}} : {})
+                ...(search ? { name: { contains: s } } : {})
             }
         }),
         prisma.specifications.findMany({
             where: {
                 ...(filterUser ? { user_id: parseInt(u) } : {}),
-                ...(search ? {name: {contains: s}} : {})
+                ...(search ? { name: { contains: s } } : {})
             },
             select: {
                 specification_id: true,

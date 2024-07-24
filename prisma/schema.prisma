@@ -43,7 +43,6 @@ model series_inputs {
   series_input_id               Int @id @default(autoincrement())
   series_id                     Int
   name                          String
-  property_name                 String?
   type                          String
   value                         String?
   index                         Int
