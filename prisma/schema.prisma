@@ -16,7 +16,7 @@ datasource db {
 model users {
   user_id        Int              @id @default(autoincrement())
   admin          Boolean
-  name           String
+  name           String           @unique
   active         Boolean          @default(true)
   reports        reports[]
   specifications specifications[]

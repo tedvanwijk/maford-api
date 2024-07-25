@@ -550,14 +550,38 @@ app.put('/custom_params', async (req, res) => {
 // #endregion
 
 app.post('/reports/new', async (req, res) => {
+    // still store issue in own db just in case github token is expired
     const result = await prisma.reports.create({
         data: {
             summary: req.body.summary,
             description: req.body.description,
             specification_id: parseInt(req.body.specification_id),
-            user_id: req.body.user_id
+            user_id: parseInt(req.body.user_id)
         }
     })
+
+    const title = `user_id: ${req.body.user_id}; specification_id: ${req.body.specification_id}. ${req.body.summary}`;
+    await fetch(
+        `https://api.github.com/repos/tedvanwijk/maford-issues/issues`,
+        {
+            method: "POST",
+            headers: {
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${process.env.ISSUE_TOKEN}`
+            },
+            body: JSON.stringify({
+                owner: 'tedvanwijk',
+                repo: 'maford-client',
+                title: title,
+                body: req.body.description,
+                assignee: null,
+                milestone: null,
+                labels: ['user_issue']
+            })
+        }
+    )
+
+    // TOOD: error handling (especially if github token is expired)
     return res.sendStatus(204);
 })
 
