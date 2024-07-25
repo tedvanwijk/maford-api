@@ -206,7 +206,7 @@ app.get('/tools/:tool_id/inputs/by_type', async (req, res) => {
         else toggleInputs.push(result[i]);
     }
 
-    res.status(200).json({decimalInputs, toggleInputs});
+    res.status(200).json({ decimalInputs, toggleInputs });
 })
 
 app.get('/tool/:tool_id/inputs', async (req, res) => {
@@ -293,7 +293,7 @@ app.get('/specifications', async (req, res) => {
     let search = s !== '';
     let page = parseInt(p);
     const specsPerPage = 15;
-    const [count, specs] = await prisma.$transaction([
+    const [count, specs, version] = await prisma.$transaction([
         prisma.specifications.count({
             where: {
                 ...(filterUser ? { user_id: parseInt(u) } : {}),
@@ -309,7 +309,12 @@ app.get('/specifications', async (req, res) => {
                 specification_id: true,
                 users: true,
                 status: true,
-                name: true
+                name: true,
+                versions: {
+                    select: {
+                        active: true
+                    }
+                }
             },
             take: specsPerPage,
             skip: specsPerPage * page,
