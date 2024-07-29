@@ -511,13 +511,41 @@ app.get('/users', async (req, res) => {
 })
 
 app.post('/users/new', async (req, res) => {
-    const result = await prisma.users.create({
-        data: {
-            name: req.body.name,
-            admin: false
-        }
-    });
+    const [_, result] = await prisma.$transaction([
+        prisma.users.create({
+            data: {
+                name: req.body.name,
+                admin: false
+            }
+        }),
+        prisma.users.findMany({
+            where: {
+                active: true
+            }
+        })
+    ])
     return res.status(201).json(result);
+})
+
+app.delete('/users/:user_id', async (req, res) => {
+    // doesn't actually delete, but deactivates so specs belonging to that user stay
+    const [_, result] = await prisma.$transaction([
+        prisma.users.update({
+            where: {
+                user_id: parseInt(req.params.user_id)
+            },
+            data: {
+                active: false
+            }
+        }),
+        prisma.users.findMany({
+            where: {
+                active: true
+            }
+        })
+    ])
+
+    res.status(200).json(result);
 })
 
 // #endregion
