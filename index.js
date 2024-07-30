@@ -297,13 +297,43 @@ app.get('/specifications', async (req, res) => {
         prisma.specifications.count({
             where: {
                 ...(filterUser ? { user_id: parseInt(u) } : {}),
-                ...(search ? { name: { contains: s } } : {})
+                ...(search ? {
+                    OR: [
+                        {
+                            name: {
+                                contains: s
+                            }
+                        }, 
+                        {
+                            users: {
+                                name: {
+                                    contains: s
+                                }
+                            }
+                        }
+                    ]
+                } : {})
             }
         }),
         prisma.specifications.findMany({
             where: {
                 ...(filterUser ? { user_id: parseInt(u) } : {}),
-                ...(search ? { name: { contains: s } } : {})
+                ...(search ? {
+                    OR: [
+                        {
+                            name: {
+                                contains: s
+                            }
+                        }, 
+                        {
+                            users: {
+                                name: {
+                                    contains: s
+                                }
+                            }
+                        }
+                    ]
+                } : {})
             },
             select: {
                 specification_id: true,
