@@ -310,11 +310,6 @@ app.get('/specifications', async (req, res) => {
                                     contains: s
                                 }
                             }
-                        },
-                        {
-                            specification_id: {
-                                contains: s
-                            }
                         }
                     ]
                 } : {})
@@ -335,11 +330,6 @@ app.get('/specifications', async (req, res) => {
                                 name: {
                                     contains: s
                                 }
-                            }
-                        },
-                        {
-                            specification_id: {
-                                contains: s
                             }
                         }
                     ]
