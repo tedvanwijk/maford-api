@@ -360,6 +360,13 @@ app.get('/specification/:specification_id', async (req, res) => {
     const spec = await prisma.specifications.findUnique({
         where: {
             specification_id: parseInt(req.params.specification_id)
+        },
+        include: {
+            versions: {
+                select: {
+                    active: true
+                }
+            }
         }
     })
     res.status(200).json(spec);
