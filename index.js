@@ -344,6 +344,11 @@ app.get('/specifications', async (req, res) => {
                     select: {
                         active: true
                     }
+                },
+                tools: {
+                    select: {
+                        name: true
+                    }
                 }
             },
             take: specsPerPage,
@@ -386,6 +391,8 @@ app.post('/specifications/new', async (req, res) => {
             }
         }
     });
+    // req.body.ToolType later gets changed to the name to work with C#, so store it in a different var
+    const toolId = req.body.ToolType;
 
     // TODO: instead of storing the entire toolData var in the db, store only the request body. The toolData also includes things like executable path etc., which need to be retrieved from the custom_params table when the request gets passed over to the exe
     if (specCount !== 0) {
@@ -396,7 +403,8 @@ app.post('/specifications/new', async (req, res) => {
                 data: JSON.stringify(req.body),
                 name: req.body.specName,
                 path: '',
-                error: ''
+                error: '',
+                tool_id: parseInt(toolId)
             }
         })
         return res.status(200).json(result)
@@ -410,7 +418,8 @@ app.post('/specifications/new', async (req, res) => {
                 data: JSON.stringify(req.body),
                 name: req.body.specName,
                 path: '',
-                error: ''
+                error: '',
+                tool_id: parseInt(toolId)
             }
         });
         req.body.ToolType = additionalSpecParameters.ToolTypeName;
