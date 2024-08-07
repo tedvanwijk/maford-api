@@ -605,14 +605,14 @@ app.get('/custom_params', async (req, res) => {
 
 app.put('/custom_params', async (req, res) => {
     let queries = [];
-    for (let i = 0; i < req.body; i++) {
+    for (const [key, value] of Object.entries(req.body)) {
         queries.push(
             prisma.custom_params.update({
                 where: {
-                    title: req.body[i].title
+                    title: key
                 },
                 data: {
-                    value: req.body[i].title
+                    value: value
                 }
             })
         )
