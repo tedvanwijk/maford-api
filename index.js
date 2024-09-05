@@ -17,6 +17,8 @@ app.use(cors(corsOptions));
 const port = 5000;
 
 const { execFile, spawn } = require('child_process');
+const path = require('path');
+const { loadTools, convertCatalogToolFormatting } = require('./lib/catalogToolLoader');
 
 app.get('/', (req, res) => {
     res.send('Hello World!')
@@ -38,26 +40,24 @@ app.get('/series/:series_id', async (req, res) => {
     const result = await prisma.series.findUnique({
         where: {
             series_id: parseInt(req.params.series_id)
+        },
+        include: {
+            _count: {
+                select: {
+                    catalog_tools: true
+                }
+            }
         }
     })
     return res.json(result);
 })
 
 app.put('/series/:series_id', async (req, res) => {
-    let updatedSeriesData = {};
-    let updatedInputData = Array(req.body.seriesInputLength).fill(0).map(() => ({}));
-    // first loop filters out non-input series data and puts the series input data into an ordered array so all values for 1 row are in a single object
-    for (let [key, value] of Object.entries(req.body)) {
-        // console.log(key, value);
-        let seriesInputArray = key.split('__');
-        if (seriesInputArray.length === 1) {
-            // if the lenght of this array is 1, it is not a series input but just a series column
-            if (!isNaN(value)) value = parseFloat(value);
-            updatedSeriesData[key] = value;
-            continue;
-        }
-        updatedInputData[parseInt(seriesInputArray[0])][seriesInputArray[1]] = value;
-    }
+    let updatedSeriesData = {...req.body};
+    let updatedInputData = [...req.body.series_input];
+    delete updatedSeriesData.series_input;
+    updatedSeriesData.flute_count = parseInt(updatedSeriesData.flute_count);
+    updatedSeriesData.helix_angle = parseInt(updatedSeriesData.helix_angle);
 
     let seriesInputQueries = [];
     // second loop turns each array entry (which is an object containing name etc.) into a prisma query
@@ -104,7 +104,14 @@ app.put('/series/:series_id', async (req, res) => {
             where: {
                 series_id: parseInt(req.params.series_id)
             },
-            data: updatedSeriesData
+            data: updatedSeriesData,
+            include: {
+                _count: {
+                    select: {
+                        catalog_tools: true
+                    }
+                }
+            }
         }),
         ...seriesInputQueries
     ])
@@ -113,20 +120,11 @@ app.put('/series/:series_id', async (req, res) => {
 })
 
 app.post('/series/:tool_id/new', async (req, res) => {
-    let updatedSeriesData = {};
-    let updatedInputData = Array(req.body.seriesInputLength).fill(0).map(() => ({}));
-    // first loop filters out non-input series data and puts the series input data into an ordered array so all values for 1 row are in a single object
-    for (let [key, value] of Object.entries(req.body)) {
-        // console.log(key, value);
-        let seriesInputArray = key.split('__');
-        if (seriesInputArray.length === 1) {
-            // if the lenght of this array is 1, it is not a series input but just a series column
-            if (!isNaN(value)) value = parseFloat(value);
-            updatedSeriesData[key] = value;
-            continue;
-        }
-        updatedInputData[parseInt(seriesInputArray[0])][seriesInputArray[1]] = value;
-    }
+    let updatedSeriesData = {...req.body};
+    let updatedInputData = [...req.body.series_input];
+    delete updatedSeriesData.series_input;
+    updatedSeriesData.flute_count = parseInt(updatedSeriesData.flute_count);
+    updatedSeriesData.helix_angle = parseInt(updatedSeriesData.helix_angle);
 
     updatedInputData.forEach((e, i) => { e.index = i });
 
@@ -138,6 +136,13 @@ app.post('/series/:tool_id/new', async (req, res) => {
             series_inputs: {
                 create: updatedInputData
             }
+        },
+        include: {
+            _count: {
+                select: {
+                    catalog_tools: true
+                }
+            }
         }
     });
 
@@ -148,6 +153,13 @@ app.get('/series/tool_id/:tool_id', async (req, res) => {
     const result = await prisma.series.findMany({
         where: {
             tool_id: parseInt(req.params.tool_id)
+        },
+        include: {
+            _count: {
+                select: {
+                    catalog_tools: true
+                }
+            }
         }
     });
     return res.json(result);
@@ -619,6 +631,173 @@ app.put('/custom_params', async (req, res) => {
     }
     const result = await prisma.$transaction(queries);
     return res.status(200).json(result);
+})
+
+// #endregion
+
+// #region catalog
+
+app.put('/catalog/:series_id/update', async (req, res) => {
+    const [seriesPath, series] = await prisma.$transaction([
+        prisma.custom_params.findUnique({
+            where: {
+                title: 'ToolSeriesPath'
+            }
+        }),
+        prisma.series.findUnique({
+            where: {
+                series_id: parseInt(req.params.series_id)
+            },
+            include: {
+                series_inputs: {
+                    select: {
+                        catalog_index: true,
+                        name: true,
+                        type: true,
+                        value: true
+                    },
+                    orderBy: {
+                        catalog_index: 'asc'
+                    }
+                }
+            }
+        })
+    ]);
+
+    const fullPath = path.join(seriesPath.value, series.tool_series_file_name);
+    const newTools = loadTools(
+        fullPath,
+        series
+    );
+
+    const [_, newSeries, catalogTools] = await prisma.$transaction([
+        prisma.catalog_tools.deleteMany({
+            where: {
+                series_id: parseInt(req.params.series_id)
+            }
+        }),
+        prisma.series.update({
+            where: {
+                series_id: parseInt(req.params.series_id)
+            },
+            include: {
+                _count: {
+                    select: {
+                        catalog_tools: true
+                    }
+                }
+            },
+            data: {
+                catalog_updated: new Date()
+            }
+        }),
+        prisma.catalog_tools.createMany({
+            data: newTools
+        })
+    ])
+
+    res.status(200).json({series: newSeries, catalogTools});
+})
+
+app.get('/catalog', async (req, res) => {
+    let { p, s } = req.query;
+    let search = s !== '';
+    let page = parseInt(p);
+    const specsPerPage = 15;
+    const [count, tools, version] = await prisma.$transaction([
+        prisma.catalog_tools.count({
+            where: {
+                ...(search ? {
+                    OR: [
+                        {
+                            tool_number: {
+                                contains: s
+                            }
+                        },
+                        {
+                            series: {
+                                name: {
+                                    contains: s
+                                }
+                            }
+                        }
+                    ]
+                } : {})
+            }
+        }),
+        prisma.catalog_tools.findMany({
+            where: {
+                ...(search ? {
+                    OR: [
+                        {
+                            tool_number: {
+                                contains: s
+                            }
+                        },
+                        {
+                            series: {
+                                name: {
+                                    contains: s
+                                }
+                            }
+                        }
+                    ]
+                } : {})
+            },
+            select: {
+                catalog_tool_id: true,
+                tool_number: true,
+                series: {
+                    select: {
+                        name: true,
+                        tools: {
+                            select: {
+                                name: true
+                            }
+                        }
+                    }
+                }
+            },
+            take: specsPerPage,
+            skip: specsPerPage * page,
+            orderBy: {
+                tool_number: 'asc'
+            }
+        })
+    ])
+    return res.status(200).json({ tools: tools, pages: Math.ceil(count / specsPerPage) });
+})
+
+app.get('/catalog/:catalog_tool_id', async (req, res) => {
+    const result = await prisma.catalog_tools.findUnique({
+        where: {
+            catalog_tool_id: parseInt(req.params.catalog_tool_id)
+        }
+    });
+
+    return res.status(200).json(result);
+})
+
+app.get('/catalog/:catalog_tool_id/copy', async (req, res) => {
+    let result = await prisma.catalog_tools.findUnique({
+        where: {
+            catalog_tool_id: parseInt(req.params.catalog_tool_id)
+        },
+        include: {
+            series: {
+                include: {
+                    tools: true,
+                    series_inputs: {
+                        where: {
+                            type: 'toggle' 
+                        }
+                    }
+                }
+            }
+        }
+    })
+    result = convertCatalogToolFormatting(result)
+    return res.json(result)
 })
 
 // #endregion

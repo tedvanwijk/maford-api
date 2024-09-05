@@ -17,16 +17,19 @@ model users {
 }
 
 model series {
-  series_id                Int             @id @default(autoincrement())
-  name                     String          @unique
-  flute_count              Int
-  helix_angle              Int
-  tool_series_file_name    String
-  tool_series_input_range  String
-  tool_series_output_range String
-  tool_id                  Int
-  tools                    tools           @relation(fields: [tool_id], references: [tool_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_tool_id")
-  series_inputs            series_inputs[]
+  series_id                   Int             @id @default(autoincrement())
+  name                        String          @unique
+  flute_count                 Int
+  helix_angle                 Int
+  tool_series_file_name       String
+  tool_series_input_range     String
+  tool_series_output_range    String
+  tool_id                     Int
+  tools                       tools           @relation(fields: [tool_id], references: [tool_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_tool_id")
+  catalog_index_same_as_index Boolean         @default(true)
+  catalog_updated             DateTime?
+  series_inputs               series_inputs[]
+  catalog_tools               catalog_tools[]
 }
 
 model series_inputs {
@@ -36,9 +39,19 @@ model series_inputs {
   type            String
   value           String?
   index           Int
+  catalog_index   Int?
   series          series  @relation(fields: [series_id], references: [series_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_series_id")
 
   @@unique([series_id, index], name: "seriesIdIndex")
+}
+
+model catalog_tools {
+  catalog_tool_id Int    @id @default(autoincrement())
+  series_id       Int
+  tool_number     String
+  data            Json
+
+  series series @relation(fields: [series_id], references: [series_id], onDelete: Cascade, onUpdate: Cascade, map: "fk_series_id")
 }
 
 model tools {
