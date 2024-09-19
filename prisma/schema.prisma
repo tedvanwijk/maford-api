@@ -77,6 +77,7 @@ model tool_inputs {
   tool_input_dependency_rules_1 tool_input_rules[]    @relation("tool_input_dependency_id_1")
   tool_input_dependency_rules_2 tool_input_rules[]    @relation("tool_input_dependency_id_2")
   tool_input_rules              tool_input_rules[]    @relation("tool_input_id")
+  default_input_values          default_input_values[]
   tools                         tools                 @relation(fields: [tool_id], references: [tool_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_tool_id")
   tool_input_categories         tool_input_categories @relation(fields: [tool_input_category_id], references: [tool_input_category_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_tool_input_category_id")
 }
@@ -159,4 +160,12 @@ model custom_params {
   param_id Int    @id @default(autoincrement())
   title    String @unique
   value    String
+}
+
+model default_input_values {
+  default_input_value_id  Int @id @default(autoincrement())
+  tool_input_id           Int
+  catalog                 Boolean
+
+  tool_inputs             tool_inputs @relation(fields: [tool_input_id], references: [tool_input_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_tool_input_id")
 }

@@ -412,7 +412,7 @@ app.post('/specifications/new', async (req, res) => {
             data: {
                 user_id: req.body.user_id,
                 status: 'pending',
-                data: JSON.stringify(req.body),
+                data: req.body,
                 name: req.body.specName,
                 path: '',
                 error: '',
@@ -427,7 +427,7 @@ app.post('/specifications/new', async (req, res) => {
             data: {
                 user_id: req.body.user_id,
                 status: 'generating',
-                data: JSON.stringify(req.body),
+                data: req.body,
                 name: req.body.specName,
                 path: '',
                 error: '',
@@ -526,7 +526,7 @@ async function checkPendingSpecifications() {
 
     if (specs.length === 0) return;
     const spec = specs[0];
-    const specDbData = JSON.parse(spec.data);
+    const specDbData = spec.data;
     const specDataExecutable = { ...specDbData };
     const additionalSpecParameters = await getAdditionalSpecificationParameters(specDbData);
     specDataExecutable.ToolType = additionalSpecParameters.ToolTypeName;
@@ -545,7 +545,7 @@ async function checkPendingSpecifications() {
         },
         data: {
             status: 'generating',
-            data: JSON.stringify(specDbData)
+            data: specDbData
         }
     })
     execFile(specData.ExecutablePath, [parameterString], (err, data) => {
