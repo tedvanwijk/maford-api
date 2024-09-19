@@ -165,7 +165,8 @@ model custom_params {
 model default_input_values {
   default_input_value_id  Int @id @default(autoincrement())
   tool_input_id           Int
-  catalog                 Boolean
+  new_tool                Boolean @default(false)
+  value                   String
 
   tool_inputs             tool_inputs @relation(fields: [tool_input_id], references: [tool_input_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_tool_input_id")
 }

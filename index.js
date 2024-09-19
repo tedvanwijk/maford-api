@@ -53,7 +53,7 @@ app.get('/series/:series_id', async (req, res) => {
 })
 
 app.put('/series/:series_id', async (req, res) => {
-    let updatedSeriesData = {...req.body};
+    let updatedSeriesData = { ...req.body };
     let updatedInputData = [...req.body.series_input];
     delete updatedSeriesData.series_input;
     updatedSeriesData.flute_count = parseInt(updatedSeriesData.flute_count);
@@ -120,7 +120,7 @@ app.put('/series/:series_id', async (req, res) => {
 })
 
 app.post('/series/:tool_id/new', async (req, res) => {
-    let updatedSeriesData = {...req.body};
+    let updatedSeriesData = { ...req.body };
     let updatedInputData = [...req.body.series_input];
     delete updatedSeriesData.series_input;
     updatedSeriesData.flute_count = parseInt(updatedSeriesData.flute_count);
@@ -222,10 +222,9 @@ app.get('/tools/:tool_id/inputs/by_type', async (req, res) => {
 })
 
 app.get('/tool/:tool_id/inputs', async (req, res) => {
-
-    let toolInputs, toolCategories, toolInputRules, commonToolInputs;
+    let toolInputs, toolCategories, toolInputRules, commonToolInputs, defaultValues;
     if (req.query.name === 'true') {
-        [toolInputs, toolCategories, toolInputRules, commonToolInputs] = await prisma.$transaction([
+        [toolInputs, toolCategories, toolInputRules, commonToolInputs, defaultValues] = await prisma.$transaction([
             prisma.tool_inputs.findMany({
                 where: {
                     tools: {
@@ -257,10 +256,25 @@ app.get('/tool/:tool_id/inputs', async (req, res) => {
                     }
                 }
             }),
-            prisma.tool_inputs_common.findMany()
+            prisma.tool_inputs_common.findMany(),
+            prisma.default_input_values.findMany({
+                where: {
+                    new_tool: true,
+                    tool_inputs: {
+                        tool_id: parseInt(req.params.tool_id)
+                    }
+                },
+                include: {
+                    tool_inputs: {
+                        select: {
+                            type: true
+                        }
+                    }
+                }
+            })
         ]);
     } else {
-        [toolInputs, toolCategories, toolInputRules, commonToolInputs] = await prisma.$transaction([
+        [toolInputs, toolCategories, toolInputRules, commonToolInputs, defaultValues] = await prisma.$transaction([
             prisma.tool_inputs.findMany({
                 where: {
                     tool_id: parseInt(req.params.tool_id)
@@ -286,13 +300,28 @@ app.get('/tool/:tool_id/inputs', async (req, res) => {
                     }
                 }
             }),
-            prisma.tool_inputs_common.findMany()
+            prisma.tool_inputs_common.findMany(),
+            prisma.default_input_values.findMany({
+                where: {
+                    new_tool: true,
+                    tool_inputs: {
+                        tool_id: parseInt(req.params.tool_id)
+                    }
+                },
+                include: {
+                    tool_inputs: {
+                        select: {
+                            type: true
+                        }
+                    }
+                }
+            })
         ]);
     }
 
 
 
-    return res.status(200).json({ toolCategories, toolInputs, toolInputRules, commonToolInputs });
+    return res.status(200).json({ toolCategories, toolInputs, toolInputRules, commonToolInputs, defaultValues });
 })
 
 // #endregion
@@ -696,7 +725,7 @@ app.put('/catalog/:series_id/update', async (req, res) => {
         })
     ])
 
-    res.status(200).json({series: newSeries, catalogTools});
+    res.status(200).json({ series: newSeries, catalogTools });
 })
 
 app.get('/catalog', async (req, res) => {
@@ -779,7 +808,7 @@ app.get('/catalog/:catalog_tool_id', async (req, res) => {
 })
 
 app.get('/catalog/:catalog_tool_id/copy', async (req, res) => {
-    let result = await prisma.catalog_tools.findUnique({
+    let data = await prisma.catalog_tools.findUnique({
         where: {
             catalog_tool_id: parseInt(req.params.catalog_tool_id)
         },
@@ -789,15 +818,30 @@ app.get('/catalog/:catalog_tool_id/copy', async (req, res) => {
                     tools: true,
                     series_inputs: {
                         where: {
-                            type: 'toggle' 
+                            type: 'toggle'
                         }
                     }
                 }
             }
         }
+    });
+
+    let defaultValues = await prisma.default_input_values.findMany({
+        where: {
+            tool_inputs: {
+                tool_id: parseInt(data.series.tool_id)
+            }
+        },
+        include: {
+            tool_inputs: {
+                select: {
+                    type: true
+                }
+            }
+        }
     })
-    result = convertCatalogToolFormatting(result)
-    return res.json(result)
+    data = convertCatalogToolFormatting(data)
+    return res.json({ data, defaultValues })
 })
 
 // #endregion
