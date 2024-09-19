@@ -808,7 +808,7 @@ app.get('/catalog/:catalog_tool_id', async (req, res) => {
 })
 
 app.get('/catalog/:catalog_tool_id/copy', async (req, res) => {
-    let data = await prisma.catalog_tools.findUnique({
+    let tool = await prisma.catalog_tools.findUnique({
         where: {
             catalog_tool_id: parseInt(req.params.catalog_tool_id)
         },
@@ -826,10 +826,17 @@ app.get('/catalog/:catalog_tool_id/copy', async (req, res) => {
         }
     });
 
+    let data = convertCatalogToolFormatting(tool);
+    let toolDataProperties = [];
+    for (const [key, value] of Object.entries(data)) toolDataProperties.push(key);
+
     let defaultValues = await prisma.default_input_values.findMany({
         where: {
             tool_inputs: {
-                tool_id: parseInt(data.series.tool_id)
+                tool_id: parseInt(tool.series.tool_id),
+                property_name: {
+                    notIn: toolDataProperties
+                }
             }
         },
         include: {
@@ -840,7 +847,6 @@ app.get('/catalog/:catalog_tool_id/copy', async (req, res) => {
             }
         }
     })
-    data = convertCatalogToolFormatting(data)
     return res.json({ data, defaultValues })
 })
 
