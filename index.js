@@ -54,7 +54,6 @@ app.get('/series/:series_id', async (req, res) => {
 
 app.put('/series/:series_id', async (req, res) => {
     let updatedSeriesData = { ...req.body };
-    let updatedInputData = [...req.body.series_input];
     delete updatedSeriesData.series_input;
     updatedSeriesData.flute_count = parseInt(updatedSeriesData.flute_count);
     updatedSeriesData.helix_angle = parseInt(updatedSeriesData.helix_angle);
@@ -62,6 +61,8 @@ app.put('/series/:series_id', async (req, res) => {
     let seriesInputQueries = [];
     // second loop turns each array entry (which is an object containing name etc.) into a prisma query
     for (let i = 0; i < req.body.seriesInputLength; i++) {
+        let updatedInputData = req.body.series_input[i]; 
+        updatedInputData.catalog_index = parseInt(updatedInputData.catalog_index);
         seriesInputQueries.push(
             prisma.series_inputs.upsert({
                 where: {
@@ -70,9 +71,9 @@ app.put('/series/:series_id', async (req, res) => {
                         series_id: parseInt(req.params.series_id)
                     }
                 },
-                update: updatedInputData[i],
+                update: updatedInputData,
                 create: {
-                    ...updatedInputData[i],
+                    ...updatedInputData,
                     index: i,
                     series_id: parseInt(req.params.series_id)
                 }
