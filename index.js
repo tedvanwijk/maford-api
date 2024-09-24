@@ -18,7 +18,7 @@ const port = 5000;
 
 const { execFile, spawn } = require('child_process');
 const path = require('path');
-const { loadTools, convertCatalogToolFormatting } = require('./lib/catalogToolLoader');
+const { loadTools, convertCatalogToolFormatting, convertCatalogMetricUnits } = require('./lib/catalogToolLoader');
 
 app.get('/', (req, res) => {
     res.send('Hello World!')
@@ -799,7 +799,7 @@ app.get('/catalog', async (req, res) => {
 })
 
 app.get('/catalog/:catalog_tool_id', async (req, res) => {
-    const tool = await prisma.catalog_tools.findUnique({
+    let tool = await prisma.catalog_tools.findUnique({
         where: {
             catalog_tool_id: parseInt(req.params.catalog_tool_id)
         }
@@ -820,6 +820,8 @@ app.get('/catalog/:catalog_tool_id', async (req, res) => {
         }
     });
 
+    tool = convertCatalogMetricUnits(tool);
+
     for (let i = 0; i < inputs.length; i++) {
         const propertyName = inputs[i].property_name;
         const clientName = inputs[i].client_name;
@@ -827,9 +829,63 @@ app.get('/catalog/:catalog_tool_id', async (req, res) => {
         const oldToolEntryValue = tool.data[propertyName];
         delete tool.data[propertyName];
         tool.data[clientName] = oldToolEntryValue;
+
+        if (tool.convertedData !== undefined) {
+            if (tool.convertedData[propertyName] !== undefined) {
+                const oldToolEntryValue = tool.convertedData[propertyName];
+                delete tool.convertedData[propertyName];
+                tool.convertedData[clientName] = oldToolEntryValue;
+            }
+        }
     }
 
     return res.status(200).json(tool);
+})
+
+app.get('/catalog/:catalog_tool_id/test', async (req, res) => {
+    let tool = await prisma.catalog_tools.findUnique({
+        where: {
+            catalog_tool_id: parseInt(req.params.catalog_tool_id)
+        }
+    });
+
+    const inputs = await prisma.tool_inputs.findMany({
+        where: {
+            tools: {
+                series: {
+                    some: {
+                        series_id: parseInt(tool.series_id)
+                    }
+                }
+            },
+            property_name: {
+                in: Object.keys(tool.data)
+            }
+        }
+    });
+
+    let data = convertCatalogMetricUnits(tool);
+
+    for (let i = 0; i < inputs.length; i++) {
+        const propertyName = inputs[i].property_name;
+        const clientName = inputs[i].client_name;
+
+        const oldToolEntryValue = tool.data[propertyName];
+        delete tool.data[propertyName];
+        tool.data[clientName] = oldToolEntryValue;
+
+        if (tool.convertedData !== undefined) {
+            if (tool.convertedData[propertyName] !== undefined) {
+                const oldToolEntryValue = tool.convertedData[propertyName];
+                delete tool.convertedData[propertyName];
+                tool.convertedData[clientName] = oldToolEntryValue;
+            }
+        }
+    }
+
+
+
+    res.json(data)
 })
 
 app.get('/catalog/:catalog_tool_id/copy', async (req, res) => {
