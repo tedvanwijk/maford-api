@@ -799,13 +799,37 @@ app.get('/catalog', async (req, res) => {
 })
 
 app.get('/catalog/:catalog_tool_id', async (req, res) => {
-    const result = await prisma.catalog_tools.findUnique({
+    const tool = await prisma.catalog_tools.findUnique({
         where: {
             catalog_tool_id: parseInt(req.params.catalog_tool_id)
         }
     });
 
-    return res.status(200).json(result);
+    const inputs = await prisma.tool_inputs.findMany({
+        where: {
+            tools: {
+                series: {
+                    some: {
+                        series_id: parseInt(tool.series_id)
+                    }
+                }
+            },
+            property_name: {
+                in: Object.keys(tool.data)
+            }
+        }
+    });
+
+    for (let i = 0; i < inputs.length; i++) {
+        const propertyName = inputs[i].property_name;
+        const clientName = inputs[i].client_name;
+
+        const oldToolEntryValue = tool.data[propertyName];
+        delete tool.data[propertyName];
+        tool.data[clientName] = oldToolEntryValue;
+    }
+
+    return res.status(200).json(tool);
 })
 
 app.get('/catalog/:catalog_tool_id/copy', async (req, res) => {
