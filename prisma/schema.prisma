@@ -21,6 +21,7 @@ model series {
   name                        String          @unique
   flute_count                 Int
   helix_angle                 Int
+  straight_flute              Boolean         @default(false)
   tool_series_file_name       String
   tool_series_input_range     String
   tool_series_output_range    String
