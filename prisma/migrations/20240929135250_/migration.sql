@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "center_types" ALTER COLUMN "a1_lower" DROP DEFAULT,
+ALTER COLUMN "a1_upper" DROP DEFAULT,
+ALTER COLUMN "l_lower" DROP DEFAULT,
+ALTER COLUMN "l_upper" DROP DEFAULT;

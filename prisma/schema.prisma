@@ -171,3 +171,18 @@ model default_input_values {
 
   tool_inputs             tool_inputs @relation(fields: [tool_input_id], references: [tool_input_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_tool_input_id")
 }
+
+model center_types {
+  center_type_id Int @id @default(autoincrement())
+  name           String
+  a1_upper       Float
+  a1_lower       Float
+  d1_lower       Float
+  d1_upper       Float
+  a2_lower       Float
+  a2_upper       Float
+  d2_lower       Float
+  d2_upper       Float
+  l_lower        Float
+  l_upper        Float
+}
