@@ -81,6 +81,8 @@ model tool_inputs {
   default_input_values          default_input_values[]
   tools                         tools                 @relation(fields: [tool_id], references: [tool_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_tool_id")
   tool_input_categories         tool_input_categories @relation(fields: [tool_input_category_id], references: [tool_input_category_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_tool_input_category_id")
+
+  @@unique([property_name, tool_id], name: "tool_inputsPropertyNameToolId")
 }
 
 model tool_input_rules {
