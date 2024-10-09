@@ -535,12 +535,6 @@ async function getAdditionalSpecificationParameters(data) {
         }
     }, {})
 
-    for (const [key, value] of Object.entries(seriesData)) {
-        let newKey = convertDbNameToParamName(key);
-        seriesData[newKey] = value;
-        delete seriesData[key];
-    }
-
     let ShankType = 'Normal';
     if (data.ShankNeck) ShankType = 'Neck';
     else if (data.ShankDiameter > data.ToolDiameter) ShankType = 'Blend';
