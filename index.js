@@ -268,7 +268,8 @@ app.get('/tool/:tool_id/inputs', async (req, res) => {
                 include: {
                     tool_inputs: {
                         select: {
-                            type: true
+                            type: true,
+                            property_name: true
                         }
                     }
                 }
@@ -312,7 +313,8 @@ app.get('/tool/:tool_id/inputs', async (req, res) => {
                 include: {
                     tool_inputs: {
                         select: {
-                            type: true
+                            type: true,
+                            property_name: true
                         }
                     }
                 }
@@ -881,7 +883,8 @@ app.get('/catalog/:catalog_tool_id/copy', async (req, res) => {
         include: {
             tool_inputs: {
                 select: {
-                    type: true
+                    type: true,
+                    property_name: true
                 }
             }
         }
