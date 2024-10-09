@@ -255,6 +255,23 @@ app.get('/tool/:tool_id/inputs', async (req, res) => {
                             name: req.params.tool_id
                         }
                     }
+                },
+                include: {
+                    tool_dependency_inputs_1: {
+                        select: {
+                            property_name: true
+                        }
+                    },
+                    tool_dependency_inputs_2: {
+                        select: {
+                            property_name: true
+                        }
+                    },
+                    tool_inputs: {
+                        select: {
+                            property_name: true
+                        }
+                    }
                 }
             }),
             prisma.tool_inputs_common.findMany(),
@@ -299,6 +316,23 @@ app.get('/tool/:tool_id/inputs', async (req, res) => {
                 where: {
                     tool_inputs: {
                         tool_id: parseInt(req.params.tool_id)
+                    }
+                },
+                include: {
+                    tool_dependency_inputs_1: {
+                        select: {
+                            property_name: true
+                        }
+                    },
+                    tool_dependency_inputs_2: {
+                        select: {
+                            property_name: true
+                        }
+                    },
+                    tool_inputs: {
+                        select: {
+                            property_name: true
+                        }
                     }
                 }
             }),
