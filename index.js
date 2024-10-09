@@ -436,6 +436,10 @@ app.post('/specifications/new', async (req, res) => {
     // req.body.ToolType later gets changed to the name to work with C#, so store it in a different var
     const toolId = req.body.ToolType;
 
+    // some tools might only have LOC or LOF defined. Set these equal so we don't have to deal with it later
+    if (req.body.LOC === undefined) req.body.LOC = req.body.LOF;
+    if (req.body.LOF === undefined) req.body.LOF = req.body.LOC;
+
     // TODO: instead of storing the entire toolData var in the db, store only the request body. The toolData also includes things like executable path etc., which need to be retrieved from the custom_params table when the request gets passed over to the exe
     if (specCount !== 0) {
         const result = await prisma.specifications.create({
