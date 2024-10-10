@@ -61,7 +61,7 @@ app.put('/series/:series_id', async (req, res) => {
     let seriesInputQueries = [];
     // second loop turns each array entry (which is an object containing name etc.) into a prisma query
     for (let i = 0; i < req.body.seriesInputLength; i++) {
-        let updatedInputData = req.body.series_input[i]; 
+        let updatedInputData = req.body.series_input[i];
         updatedInputData.catalog_index = parseInt(updatedInputData.catalog_index);
         seriesInputQueries.push(
             prisma.series_inputs.upsert({
@@ -272,6 +272,9 @@ app.get('/tool/:tool_id/inputs', async (req, res) => {
                             property_name: true
                         }
                     }
+                },
+                orderBy: {
+                    disable: 'desc'
                 }
             }),
             prisma.tool_inputs_common.findMany(),
@@ -334,6 +337,9 @@ app.get('/tool/:tool_id/inputs', async (req, res) => {
                             property_name: true
                         }
                     }
+                },
+                orderBy: {
+                    disable: 'desc'
                 }
             }),
             prisma.tool_inputs_common.findMany(),
