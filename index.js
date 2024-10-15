@@ -259,12 +259,22 @@ app.get('/tool/:tool_id/inputs', async (req, res) => {
                 include: {
                     tool_dependency_inputs_1: {
                         select: {
-                            property_name: true
+                            property_name: true,
+                            tool_input_categories: {
+                                select: {
+                                    name: true
+                                }
+                            }
                         }
                     },
                     tool_dependency_inputs_2: {
                         select: {
-                            property_name: true
+                            property_name: true,
+                            tool_input_categories: {
+                                select: {
+                                    name: true
+                                }
+                            }
                         }
                     },
                     tool_inputs: {
@@ -324,12 +334,22 @@ app.get('/tool/:tool_id/inputs', async (req, res) => {
                 include: {
                     tool_dependency_inputs_1: {
                         select: {
-                            property_name: true
+                            property_name: true,
+                            tool_input_categories: {
+                                select: {
+                                    name: true
+                                }
+                            }
                         }
                     },
                     tool_dependency_inputs_2: {
                         select: {
-                            property_name: true
+                            property_name: true,
+                            tool_input_categories: {
+                                select: {
+                                    name: true
+                                }
+                            }
                         }
                     },
                     tool_inputs: {
