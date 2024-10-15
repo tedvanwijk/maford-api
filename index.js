@@ -498,6 +498,19 @@ app.post('/specifications/new', async (req, res) => {
     // req.body.ToolType later gets changed to the name to work with C#, so store it in a different var
     const toolId = req.body.ToolType;
 
+    // for blank tools, a bunch of parameters are not set. These need to be set in order for the controller not to crash
+    // (any values set in SWController.cs need to be set)
+    if (toolId === 2) {
+        req.body.LOC = req.body.LOA;
+        req.body.LOF = req.body.LOA;
+        req.body.ShankDiameter = req.body.ToolDiameter;
+        req.body.BodyLengthSameAsLOF = true;
+        req.body.Coolant.CoolantPatternAlongFluting = false;
+        req.body.ToolSeriesFileName = '';
+        req.body.ToolSeriesInputRange = '';
+        req.body.ToolSeriesOutputRange = '';
+    }
+
     // some tools might only have LOC or LOF defined. Set these equal so we don't have to deal with it later
     if (req.body.LOC === undefined) req.body.LOC = req.body.LOF;
     if (req.body.LOF === undefined) req.body.LOF = req.body.LOC;
@@ -517,7 +530,7 @@ app.post('/specifications/new', async (req, res) => {
         })
         return res.status(200).json(result)
     } else {
-        const additionalSpecParameters = await getAdditionalSpecificationParameters(req.body);
+        const additionalSpecParameters = await getAdditionalSpecificationParameters(req.body, toolId !== 2);
         req.body.outputPath = additionalSpecParameters.OutputPath;
         const result = await prisma.specifications.create({
             data: {
@@ -565,28 +578,47 @@ function convertDbNameToParamName(input) {
     return input.split('_').map(e => e.charAt(0).toUpperCase() + e.substring(1)).join('');
 }
 
-async function getAdditionalSpecificationParameters(data) {
-    // console.log(data)
+async function getAdditionalSpecificationParameters(data, getSeriesData = true) {
     // both the tool series information (flute count, etc.) and custom parameters (master path, etc.) can change at any time, so look up these values when a specification is about to be generated
-    let [customParams, seriesData, toolData] = await prisma.$transaction([
-        prisma.custom_params.findMany({
-            where: {
-                title: {
-                    in: ['MasterPath', 'ExecutablePath', 'ToolSeriesPath', 'DimensionFileName', 'ToleranceFileName', 'OutputPath']
+    let customParams, seriesData, toolData;
+
+    if (getSeriesData) {
+        [customParams, seriesData, toolData] = await prisma.$transaction([
+            prisma.custom_params.findMany({
+                where: {
+                    title: {
+                        in: ['MasterPath', 'ExecutablePath', 'ToolSeriesPath', 'DimensionFileName', 'ToleranceFileName', 'OutputPath']
+                    }
                 }
-            }
-        }),
-        prisma.series.findUnique({
-            where: {
-                series_id: parseInt(data.ToolSeries)
-            }
-        }),
-        prisma.tools.findUnique({
-            where: {
-                tool_id: parseInt(data.ToolType)
-            }
-        })
-    ])
+            }),
+            prisma.series.findUnique({
+                where: {
+                    series_id: parseInt(data.ToolSeries)
+                }
+            }),
+            prisma.tools.findUnique({
+                where: {
+                    tool_id: parseInt(data.ToolType)
+                }
+            })
+        ])
+    } else {
+        [customParams, toolData] = await prisma.$transaction([
+            prisma.custom_params.findMany({
+                where: {
+                    title: {
+                        in: ['MasterPath', 'ExecutablePath', 'ToolSeriesPath', 'DimensionFileName', 'ToleranceFileName', 'OutputPath']
+                    }
+                }
+            }),
+            prisma.tools.findUnique({
+                where: {
+                    tool_id: parseInt(data.ToolType)
+                }
+            })
+        ])
+    }
+
 
     customParams = customParams.reduce((total, e) => {
         return {
@@ -595,10 +627,12 @@ async function getAdditionalSpecificationParameters(data) {
         }
     }, {})
 
-    for (const [key, value] of Object.entries(seriesData)) {
-        let newKey = convertDbNameToParamName(key);
-        seriesData[newKey] = value;
-        delete seriesData[key];
+    if (getSeriesData) {
+        for (const [key, value] of Object.entries(seriesData)) {
+            let newKey = convertDbNameToParamName(key);
+            seriesData[newKey] = value;
+            delete seriesData[key];
+        }
     }
 
     let ShankType = 'Normal';
@@ -610,7 +644,8 @@ async function getAdditionalSpecificationParameters(data) {
         ShankType
     };
 
-    return { ...customParams, ...seriesData, ...computedToolParameters, ToolTypeName: toolData.name };
+    let result = { ...customParams, ...computedToolParameters, ToolTypeName: toolData.name }
+    return getSeriesData ? {...result, ...seriesData} : result;
 }
 
 async function checkPendingSpecifications() {
@@ -624,7 +659,7 @@ async function checkPendingSpecifications() {
     const spec = specs[0];
     const specDbData = spec.data;
     const specDataExecutable = { ...specDbData };
-    const additionalSpecParameters = await getAdditionalSpecificationParameters(specDbData);
+    const additionalSpecParameters = await getAdditionalSpecificationParameters(specDbData, spec.tool_id !== 2);
     specDataExecutable.ToolType = additionalSpecParameters.ToolTypeName;
     specDbData.outputPath = additionalSpecParameters.OutputPath;
     const specData = {
