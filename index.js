@@ -596,6 +596,9 @@ async function getCenterData(body) {
         body.Center.UpperCenterDimensions.LMax = centerData.l_upper;
         body.Center.UpperCenterDimensions.BossDiameter = 0.263;
         body.Center.UpperCenterDimensions.BossLength = 0.300;
+    } else {
+        body.Center.UpperCenter = false;
+        delete body.Center.UpperCenterDimensions;
     }
 
     if (body.Center.LowerType !== '' && body.Center.LowerType !== undefined) {
@@ -614,6 +617,9 @@ async function getCenterData(body) {
         body.Center.LowerCenterDimensions.LMax = centerData.l_upper;
         body.Center.LowerCenterDimensions.BossDiameter = 0.263;
         body.Center.LowerCenterDimensions.BossLength = 0.300;
+    } else {
+        body.Center.LowerCenter = false;
+        delete body.Center.LowerCenterDimensions;
     }
 }
 
