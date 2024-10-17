@@ -69,7 +69,7 @@ model tool_inputs {
   client_name                   String
   type                          String
   property_name                 String
-  tool_id                       Int
+  tool_id                       Int?
   tool_input_category_id        Int
   group                         Int?
   order                         Int?
@@ -79,7 +79,7 @@ model tool_inputs {
   tool_input_dependency_rules_2 tool_input_rules[]    @relation("tool_input_dependency_id_2")
   tool_input_rules              tool_input_rules[]    @relation("tool_input_id")
   default_input_values          default_input_values[]
-  tools                         tools                 @relation(fields: [tool_id], references: [tool_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_tool_id")
+  tools                         tools?                @relation(fields: [tool_id], references: [tool_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_tool_id")
   tool_input_categories         tool_input_categories @relation(fields: [tool_input_category_id], references: [tool_input_category_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_tool_input_category_id")
 
   @@unique([property_name, tool_id], name: "tool_inputsPropertyNameToolId")
@@ -100,28 +100,12 @@ model tool_input_rules {
 
 model tool_input_categories {
   tool_input_category_id Int           @id @default(autoincrement())
-  tool_id                Int
+  tool_id                Int?
   name                   String?
   display_title          String
-  tools                  tools         @relation(fields: [tool_id], references: [tool_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_tool_id")
+  common                 Boolean       @default(false)
+  tools                  tools?        @relation(fields: [tool_id], references: [tool_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_tool_id")
   tool_inputs            tool_inputs[]
-}
-
-model tool_inputs_common {
-  tool_input_id             Int                         @id @default(autoincrement())
-  client_name               String
-  property_name             String
-  category_name             String
-  type                      String
-  group                     Int?
-  order                     Int?
-  tool_input_common_options tool_input_common_options[]
-}
-
-model tool_input_common_options {
-  tool_input_option_id Int                @id @default(autoincrement())
-  tool_input_id        Int
-  tool_inputs_common   tool_inputs_common @relation(fields: [tool_input_id], references: [tool_input_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_tool_input_id")
 }
 
 model specifications {

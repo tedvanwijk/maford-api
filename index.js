@@ -223,71 +223,79 @@ app.get('/tools/:tool_id/inputs/by_type', async (req, res) => {
 })
 
 app.get('/tool/:tool_id/inputs', async (req, res) => {
-    let toolInputs, toolCategories, toolInputRules, commonToolInputs, defaultValues;
+    let toolCategories, defaultValues;
     if (req.query.name === 'true') {
-        [toolInputs, toolCategories, toolInputRules, commonToolInputs, defaultValues] = await prisma.$transaction([
-            prisma.tool_inputs.findMany({
-                where: {
-                    tools: {
-                        name: req.params.tool_id
-                    }
-                },
-                orderBy: [
-                    {
-                        group: 'asc'
-                    },
-                    {
-                        order: 'asc'
-                    }
-                ]
-            }),
+        [toolCategories, defaultValues] = await prisma.$transaction([
             prisma.tool_input_categories.findMany({
                 where: {
-                    tools: {
-                        name: req.params.tool_id
-                    }
-                }
-            }),
-            prisma.tool_input_rules.findMany({
-                where: {
-                    tool_inputs: {
-                        tools: {
-                            name: req.params.tool_id
-                        }
-                    }
-                },
-                include: {
-                    tool_dependency_inputs_1: {
-                        select: {
-                            property_name: true,
-                            tool_input_categories: {
-                                select: {
-                                    name: true
-                                }
+                    OR: [
+                        {
+                            tools: {
+                                name: req.params.tool_id
                             }
+                        },
+                        {
+                            common: true
                         }
-                    },
-                    tool_dependency_inputs_2: {
-                        select: {
-                            property_name: true,
-                            tool_input_categories: {
-                                select: {
-                                    name: true
-                                }
-                            }
-                        }
-                    },
-                    tool_inputs: {
-                        select: {
-                            property_name: true
-                        }
-                    }
+                    ]
                 },
                 orderBy: {
-                    disable: 'desc'
+                    common: 'asc'
+                },
+                include: {
+                    tool_inputs: {
+                        orderBy: [
+                            {
+                                group: 'asc'
+                            },
+                            {
+                                order: 'asc'
+                            }
+                        ],
+                        include: {
+                            tool_input_rules: {
+                                include: {
+                                    tool_dependency_inputs_1: {
+                                        select: {
+                                            property_name: true,
+                                            tool_input_categories: {
+                                                select: {
+                                                    name: true
+                                                }
+                                            }
+                                        }
+                                    },
+                                    tool_dependency_inputs_2: {
+                                        select: {
+                                            property_name: true,
+                                            tool_input_categories: {
+                                                select: {
+                                                    name: true
+                                                }
+                                            }
+                                        }
+                                    },
+                                    tool_inputs: {
+                                        select: {
+                                            property_name: true
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    tool_inputs_common: {
+                        orderBy: [
+                            {
+                                group: 'asc'
+                            },
+                            {
+                                order: 'asc'
+                            }
+                        ]
+                    }
                 }
             }),
-            prisma.tool_inputs_common.findMany(),
             prisma.default_input_values.findMany({
                 where: {
                     new_tool: true,
@@ -306,63 +314,75 @@ app.get('/tool/:tool_id/inputs', async (req, res) => {
             })
         ]);
     } else {
-        [toolInputs, toolCategories, toolInputRules, commonToolInputs, defaultValues] = await prisma.$transaction([
-            prisma.tool_inputs.findMany({
-                where: {
-                    tool_id: parseInt(req.params.tool_id)
-                },
-                orderBy: [
-                    {
-                        group: 'asc'
-                    },
-                    {
-                        order: 'asc'
-                    }
-                ]
-            }),
+        [toolCategories, defaultValues] = await prisma.$transaction([
             prisma.tool_input_categories.findMany({
                 where: {
-                    tool_id: parseInt(req.params.tool_id)
-                }
-            }),
-            prisma.tool_input_rules.findMany({
-                where: {
-                    tool_inputs: {
-                        tool_id: parseInt(req.params.tool_id)
-                    }
-                },
-                include: {
-                    tool_dependency_inputs_1: {
-                        select: {
-                            property_name: true,
-                            tool_input_categories: {
-                                select: {
-                                    name: true
-                                }
-                            }
+                    OR: [
+                        {
+                            tool_id: parseInt(req.params.tool_id)
+                        },
+                        {
+                            common: true
                         }
-                    },
-                    tool_dependency_inputs_2: {
-                        select: {
-                            property_name: true,
-                            tool_input_categories: {
-                                select: {
-                                    name: true
-                                }
-                            }
-                        }
-                    },
-                    tool_inputs: {
-                        select: {
-                            property_name: true
-                        }
-                    }
+                    ]
                 },
                 orderBy: {
-                    disable: 'desc'
+                    common: 'asc'
+                },
+                include: {
+                    tool_inputs: {
+                        orderBy: [
+                            {
+                                group: 'asc'
+                            },
+                            {
+                                order: 'asc'
+                            }
+                        ],
+                        include: {
+                            tool_input_rules: {
+                                include: {
+                                    tool_dependency_inputs_1: {
+                                        select: {
+                                            property_name: true,
+                                            tool_input_categories: {
+                                                select: {
+                                                    name: true
+                                                }
+                                            }
+                                        }
+                                    },
+                                    tool_dependency_inputs_2: {
+                                        select: {
+                                            property_name: true,
+                                            tool_input_categories: {
+                                                select: {
+                                                    name: true
+                                                }
+                                            }
+                                        }
+                                    },
+                                    tool_inputs: {
+                                        select: {
+                                            property_name: true
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    tool_inputs_common: {
+                        orderBy: [
+                            {
+                                group: 'asc'
+                            },
+                            {
+                                order: 'asc'
+                            }
+                        ]
+                    }
                 }
             }),
-            prisma.tool_inputs_common.findMany(),
             prisma.default_input_values.findMany({
                 where: {
                     new_tool: true,
@@ -382,9 +402,8 @@ app.get('/tool/:tool_id/inputs', async (req, res) => {
         ]);
     }
 
-
-
-    return res.status(200).json({ toolCategories, toolInputs, toolInputRules, commonToolInputs, defaultValues });
+    // return res.status(200).json(commonToolInputs)
+    return res.status(200).json({ toolCategories, defaultValues });
 })
 
 // #endregion
@@ -645,7 +664,7 @@ async function getAdditionalSpecificationParameters(data, getSeriesData = true) 
     };
 
     let result = { ...customParams, ...computedToolParameters, ToolTypeName: toolData.name }
-    return getSeriesData ? {...result, ...seriesData} : result;
+    return getSeriesData ? { ...result, ...seriesData } : result;
 }
 
 async function checkPendingSpecifications() {
