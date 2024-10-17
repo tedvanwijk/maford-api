@@ -514,6 +514,8 @@ app.post('/specifications/new', async (req, res) => {
     if (req.body.LOC === undefined) req.body.LOC = req.body.LOF;
     if (req.body.LOF === undefined) req.body.LOF = req.body.LOC;
 
+    getCenterData(req.body);
+
     // TODO: instead of storing the entire toolData var in the db, store only the request body. The toolData also includes things like executable path etc., which need to be retrieved from the custom_params table when the request gets passed over to the exe
     if (specCount !== 0) {
         const result = await prisma.specifications.create({
@@ -558,6 +560,62 @@ app.post('/specifications/new', async (req, res) => {
         return res.status(200).json(result)
     }
 })
+
+async function getCenterData(body) {
+    const centerTypesOrStatement = [];
+    if (body.Center.UpperType !== '' && body.Center.UpperType !== undefined) centerTypesOrStatement.push({
+        center_type_id: parseInt(body.Center.UpperType)
+    });
+    if (body.Center.LowerType !== '' && body.Center.LowerType !== undefined) centerTypesOrStatement.push({
+        center_type_id: parseInt(body.Center.LowerType)
+    });
+
+    if (centerTypesOrStatement.length === 0) return;
+
+    const result = await prisma.center_types.findMany({
+        where: {
+            OR: centerTypesOrStatement
+        }
+    })
+
+    // TODO: implement boss diameter and length in db
+    // TODO: actually implement tolerances
+    if (body.Center.UpperType !== '' && body.Center.UpperType !== undefined) {
+        const centerData = result.filter(e => e.center_type_id === parseInt(body.Center.UpperType))[0];
+        body.Center.UpperCenter = true;
+        body.Center.UpperCenterDimensions = {};
+        body.Center.UpperCenterDimensions.A1Min = centerData.a1_lower;
+        body.Center.UpperCenterDimensions.A1Max = centerData.a1_upper;
+        body.Center.UpperCenterDimensions.A2Min = centerData.a2_lower;
+        body.Center.UpperCenterDimensions.A2Max = centerData.a2_upper;
+        body.Center.UpperCenterDimensions.D1Min = centerData.d1_lower;
+        body.Center.UpperCenterDimensions.D1Max = centerData.d1_upper;
+        body.Center.UpperCenterDimensions.D2Min = centerData.d2_lower;
+        body.Center.UpperCenterDimensions.D2Max = centerData.d2_upper;
+        body.Center.UpperCenterDimensions.LMin = centerData.l_lower;
+        body.Center.UpperCenterDimensions.LMax = centerData.l_upper;
+        body.Center.UpperCenterDimensions.BossDiameter = 0.263;
+        body.Center.UpperCenterDimensions.BossLength = 0.300;
+    }
+
+    if (body.Center.LowerType !== '' && body.Center.LowerType !== undefined) {
+        const centerData = result.filter(e => e.center_type_id === parseInt(body.Center.LowerType))[0];
+        body.Center.LowerCenter = true;
+        body.Center.LowerCenterDimensions = {};
+        body.Center.LowerCenterDimensions.A1Min = centerData.a1_lower;
+        body.Center.LowerCenterDimensions.A1Max = centerData.a1_upper;
+        body.Center.LowerCenterDimensions.A2Min = centerData.a2_lower;
+        body.Center.LowerCenterDimensions.A2Max = centerData.a2_upper;
+        body.Center.LowerCenterDimensions.D1Min = centerData.d1_lower;
+        body.Center.LowerCenterDimensions.D1Max = centerData.d1_upper;
+        body.Center.LowerCenterDimensions.D2Min = centerData.d2_lower;
+        body.Center.LowerCenterDimensions.D2Max = centerData.d2_upper;
+        body.Center.LowerCenterDimensions.LMin = centerData.l_lower;
+        body.Center.LowerCenterDimensions.LMax = centerData.l_upper;
+        body.Center.LowerCenterDimensions.BossDiameter = 0.263;
+        body.Center.LowerCenterDimensions.BossLength = 0.300;
+    }
+}
 
 async function updateSpecificationStatus(id, data) {
     const error = data.substring(0, 3) === "ERR" ? true : false;
@@ -987,6 +1045,17 @@ app.get('/catalog/:catalog_tool_id/copy', async (req, res) => {
 })
 
 // #endregion
+
+app.get('/centers', async (req, res) => {
+    const result = await prisma.center_types.findMany({
+        select: {
+            name: true,
+            center_type_id: true
+        }
+    })
+
+    res.status(200).json(result);
+})
 
 app.post('/reports/new', async (req, res) => {
     // still store issue in own db just in case github token is expired
