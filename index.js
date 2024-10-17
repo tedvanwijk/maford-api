@@ -283,16 +283,6 @@ app.get('/tool/:tool_id/inputs', async (req, res) => {
                                 }
                             }
                         }
-                    },
-                    tool_inputs_common: {
-                        orderBy: [
-                            {
-                                group: 'asc'
-                            },
-                            {
-                                order: 'asc'
-                            }
-                        ]
                     }
                 }
             }),
@@ -370,16 +360,6 @@ app.get('/tool/:tool_id/inputs', async (req, res) => {
                                 }
                             }
                         }
-                    },
-                    tool_inputs_common: {
-                        orderBy: [
-                            {
-                                group: 'asc'
-                            },
-                            {
-                                order: 'asc'
-                            }
-                        ]
                     }
                 }
             }),
