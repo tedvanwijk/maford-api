@@ -1057,6 +1057,9 @@ app.get('/centers', async (req, res) => {
         select: {
             name: true,
             center_type_id: true
+        },
+        orderBy: {
+            name: 'asc'
         }
     })
 
