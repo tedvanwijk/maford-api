@@ -580,7 +580,7 @@ async function getCenterData(body) {
 
     // TODO: implement boss diameter and length in db
     // TODO: actually implement tolerances
-    if (body.Center.UpperType !== '' && body.Center.UpperType !== undefined) {
+    if (body.Center.UpperType !== '-1' && body.Center.UpperType !== undefined) {
         const centerData = result.filter(e => e.center_type_id === parseInt(body.Center.UpperType))[0];
         body.Center.UpperCenter = true;
         body.Center.UpperCenterDimensions = {};
@@ -601,7 +601,7 @@ async function getCenterData(body) {
         delete body.Center.UpperCenterDimensions;
     }
 
-    if (body.Center.LowerType !== '' && body.Center.LowerType !== undefined) {
+    if (body.Center.LowerType !== '-1' && body.Center.LowerType !== undefined) {
         const centerData = result.filter(e => e.center_type_id === parseInt(body.Center.LowerType))[0];
         body.Center.LowerCenter = true;
         body.Center.LowerCenterDimensions = {};
