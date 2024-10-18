@@ -526,7 +526,8 @@ app.post('/specifications/new', async (req, res) => {
                 name: req.body.specName,
                 path: '',
                 error: '',
-                tool_id: parseInt(toolId)
+                tool_id: parseInt(toolId),
+                version_id: parseInt(process.env.VERSION_ID)
             }
         })
         return res.status(200).json(result)
@@ -541,7 +542,8 @@ app.post('/specifications/new', async (req, res) => {
                 name: req.body.specName,
                 path: '',
                 error: '',
-                tool_id: parseInt(toolId)
+                tool_id: parseInt(toolId),
+                version_id: parseInt(process.env.VERSION_ID)
             }
         });
         req.body.ToolType = additionalSpecParameters.ToolTypeName;

@@ -116,7 +116,7 @@ model specifications {
   name             String
   path             String
   error            String
-  version_id       Int             @default(0)
+  version_id       Int
   tool_id          Int             @default(0)
   reports          reports[]
   users            users           @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_id")
