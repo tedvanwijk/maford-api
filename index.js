@@ -1054,19 +1054,72 @@ app.get('/catalog/:catalog_tool_id/copy', async (req, res) => {
 
 // #endregion
 
-app.get('/centers', async (req, res) => {
-    const result = await prisma.center_types.findMany({
-        select: {
-            name: true,
-            center_type_id: true
-        },
-        orderBy: {
-            name: 'asc'
-        }
-    })
+// #region centers
 
+app.get('/centers', async (req, res) => {
+    let result;
+    if (req.query.nameOnly === 'true') {
+        result = await prisma.center_types.findMany({
+            select: {
+                name: true,
+                center_type_id: true
+            },
+            orderBy: {
+                name: 'asc'
+            }
+        });
+    } else {
+        result = await prisma.center_types.findMany({
+            orderBy: {
+                name: 'asc'
+            }
+        });
+    }
     res.status(200).json(result);
 })
+
+app.put('/centers/:center_type_id', async (req, res) => {
+    const centerTypeId = req.params.center_type_id;
+    if (centerTypeId === null || centerTypeId === undefined || centerTypeId === '') return res.sendStatus(400);
+
+    const result = await prisma.center_types.update({
+        where: {
+            center_type_id: parseInt(centerTypeId)
+        },
+        data: formatCenterTypeData(req.body)
+    });
+
+    res.status(200).json(result);
+});
+
+app.post('/centers', async (req, res) => {
+    const result = await prisma.center_types.create({
+        data: formatCenterTypeData(req.body)
+    });
+
+    res.status(201).json(result);
+});
+
+function formatCenterTypeData(input) {
+    let output = {};
+    for (const [key, value] of Object.entries(input)) {
+        const keySegments = key.split('_');
+        if (keySegments[1] === 'tolerance') {
+            // tolerance entry
+            dimensionName = keySegments[0];
+            output[`${dimensionName}_upper`] = parseFloat(input[`${dimensionName}_upper`]);
+            if (value === true) {
+                output[`${dimensionName}_lower`] = parseFloat(input[`${dimensionName}_lower`]);
+            } else {
+                output[`${dimensionName}_lower`] = parseFloat(input[`${dimensionName}_upper`]);
+            }
+        }
+    }
+    output.name = input.name;
+    return output;
+}
+
+// #endregion
 
 app.post('/reports/new', async (req, res) => {
     // still store issue in own db just in case github token is expired
