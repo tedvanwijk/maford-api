@@ -596,8 +596,10 @@ async function getCenterData(body) {
         body.Center.UpperCenterDimensions.D2Max = centerData.d2_upper;
         body.Center.UpperCenterDimensions.LMin = centerData.l_lower;
         body.Center.UpperCenterDimensions.LMax = centerData.l_upper;
-        body.Center.UpperCenterDimensions.BossDiameter = 0.263;
-        body.Center.UpperCenterDimensions.BossLength = 0.300;
+        body.Center.UpperCenterDimensions.BossDiameterMax = centerData.boss_diameter_upper;
+        body.Center.UpperCenterDimensions.BossDiameterMin = centerData.boss_diameter_lower;
+        body.Center.UpperCenterDimensions.BossLengthMax = centerData.boss_length_upper;
+        body.Center.UpperCenterDimensions.BossLengthMin = centerData.boss_length_lower;
     } else {
         body.Center.UpperCenter = false;
         delete body.Center.UpperCenterDimensions;
@@ -617,8 +619,10 @@ async function getCenterData(body) {
         body.Center.LowerCenterDimensions.D2Max = centerData.d2_upper;
         body.Center.LowerCenterDimensions.LMin = centerData.l_lower;
         body.Center.LowerCenterDimensions.LMax = centerData.l_upper;
-        body.Center.LowerCenterDimensions.BossDiameter = 0.263;
-        body.Center.LowerCenterDimensions.BossLength = 0.300;
+        body.Center.LowerCenterDimensions.BossDiameterMax = centerData.boss_diameter_upper;
+        body.Center.LowerCenterDimensions.BossDiameterMin = centerData.boss_diameter_lower;
+        body.Center.LowerCenterDimensions.BossLengthMax = centerData.boss_length_upper;
+        body.Center.LowerCenterDimensions.BossLengthMin = centerData.boss_length_lower;
     } else {
         body.Center.LowerCenter = false;
         delete body.Center.LowerCenterDimensions;
