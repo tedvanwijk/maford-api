@@ -514,7 +514,7 @@ app.post('/specifications/new', async (req, res) => {
     if (req.body.LOC === undefined) req.body.LOC = req.body.LOF;
     if (req.body.LOF === undefined) req.body.LOF = req.body.LOC;
 
-    getCenterData(req.body);
+    await getCenterData(req.body);
 
     // TODO: instead of storing the entire toolData var in the db, store only the request body. The toolData also includes things like executable path etc., which need to be retrieved from the custom_params table when the request gets passed over to the exe
     if (specCount !== 0) {
@@ -572,17 +572,19 @@ async function getCenterData(body) {
         center_type_id: parseInt(body.Center.LowerType)
     });
 
-    if (centerTypesOrStatement.length === 0) return;
+    let result;
+    if (centerTypesOrStatement.length !== 0) {
+        result = await prisma.center_types.findMany({
+            where: {
+                OR: centerTypesOrStatement
+            }
+        })
+    }
 
-    const result = await prisma.center_types.findMany({
-        where: {
-            OR: centerTypesOrStatement
-        }
-    })
 
     // TODO: implement boss diameter and length in db
     // TODO: actually implement tolerances
-    if (body.Center.UpperType !== '-1' && body.Center.UpperType !== undefined) {
+    if (body.Center.UpperCenterType !== '-1' && body.Center.UpperCenterType !== undefined) {
         const centerData = result.filter(e => e.center_type_id === parseInt(body.Center.UpperType))[0];
         body.Center.UpperCenter = true;
         body.Center.UpperCenterDimensions = {};
@@ -605,7 +607,7 @@ async function getCenterData(body) {
         delete body.Center.UpperCenterDimensions;
     }
 
-    if (body.Center.LowerType !== '-1' && body.Center.LowerType !== undefined) {
+    if (body.Center.LowerCenterType !== '-1' && body.Center.LowerCenterType !== undefined) {
         const centerData = result.filter(e => e.center_type_id === parseInt(body.Center.LowerType))[0];
         body.Center.LowerCenter = true;
         body.Center.LowerCenterDimensions = {};
@@ -627,6 +629,8 @@ async function getCenterData(body) {
         body.Center.LowerCenter = false;
         delete body.Center.LowerCenterDimensions;
     }
+    
+    return body;
 }
 
 async function updateSpecificationStatus(id, data) {
