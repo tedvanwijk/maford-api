@@ -17,6 +17,7 @@ app.use(cors(corsOptions));
 const port = 5000;
 
 const { execFile, spawn } = require('child_process');
+let childProcess;
 const path = require('path');
 const { loadTools, convertCatalogToolFormatting, convertCatalogMetricUnits } = require('./lib/catalogToolLoader');
 
@@ -392,6 +393,7 @@ app.get('/tool/:tool_id/inputs', async (req, res) => {
 
 app.get('/specifications', async (req, res) => {
     let { p, u, s } = req.query;
+    if (u === undefined) u = null;
     let filterUser = !(u === 'null' || u === null | u === -1);
     let search = s !== '';
     let page = parseInt(p);
@@ -480,10 +482,28 @@ app.get('/specification/:specification_id', async (req, res) => {
     res.status(200).json(spec);
 })
 
-app.post('/specifications/new/test', async (req, res) => {
-    console.log(req.body);
-    const params = await getAdditionalSpecificationParameters(req.body);
-    res.json(params);
+app.put('/specifications/cancel/:specification_id', async (req, res) => {
+    const spec = await prisma.specifications.findUnique({
+        where: {
+            specification_id: parseInt(req.params.specification_id)
+        },
+        select: {
+            status: true
+        }
+    });
+    const status = spec.status;
+    if (status === 'finished' || status === 'canceled' || status === 'failed') return res.sendStatus(204);
+    await prisma.specifications.update({
+        where: {
+            specification_id: parseInt(req.params.specification_id)
+        },
+        data: {
+            status: 'canceled'
+        }
+    });
+    if (status === 'pending') return res.sendStatus(204);
+    if (childProcess !== undefined) childProcess.kill();
+    res.sendStatus(204);
 })
 
 app.post('/specifications/new', async (req, res) => {
@@ -583,8 +603,10 @@ app.post('/specifications/new', async (req, res) => {
             SpecificationNumber: result.specification_id
         };
         let parameterString = btoa(JSON.stringify(specData));
-        execFile(specData.ExecutablePath, [parameterString], (err, data) => {
-            updateSpecificationStatus(result.specification_id, data);
+        childProcess = execFile(specData.ExecutablePath, [parameterString], (err, data) => {
+            let canceled = false;
+            if (err !== undefined && err !== null) canceled = err.killed;
+            updateSpecificationStatus(result.specification_id, data, canceled);
             checkPendingSpecifications(result.specification_id);
         });
         return res.status(200).json(result)
@@ -657,18 +679,20 @@ async function getCenterData(body) {
         body.Center.LowerCenter = false;
         delete body.Center.LowerCenterDimensions;
     }
-    
+
     return body;
 }
 
-async function updateSpecificationStatus(id, data) {
+async function updateSpecificationStatus(id, data, canceled) {
     const error = data.substring(0, 3) === "ERR" ? true : false;
+    const status = canceled ? 'canceled' : error ? 'failed' : 'finished';
+
     await prisma.specifications.update({
         where: {
             specification_id: id
         },
         data: {
-            status: error ? "failed" : "finished",
+            status: status,
             error: error ? data : ""
         }
     });
@@ -780,8 +804,10 @@ async function checkPendingSpecifications() {
             data: specDbData
         }
     })
-    execFile(specData.ExecutablePath, [parameterString], (err, data) => {
-        updateSpecificationStatus(spec.specification_id, data);
+    childProcess = execFile(specData.ExecutablePath, [parameterString], (err, data) => {
+        let canceled = false;
+        if (err !== undefined && err !== null) canceled = err.killed;
+        updateSpecificationStatus(spec.specification_id, data, canceled);
         checkPendingSpecifications(spec.specification_id);
     });
 }
