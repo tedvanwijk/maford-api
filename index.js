@@ -660,7 +660,7 @@ async function getAdditionalSpecificationParameters(data, getSeriesData = true) 
             prisma.custom_params.findMany({
                 where: {
                     title: {
-                        in: ['MasterPath', 'ExecutablePath', 'ToolSeriesPath', 'DimensionPath', 'ToleranceFileName', 'OutputPath']
+                        in: ['MasterPath', 'ExecutablePath', 'ToolSeriesPath', 'DimensionPath', 'OutputPath']
                     }
                 }
             }),
@@ -680,7 +680,7 @@ async function getAdditionalSpecificationParameters(data, getSeriesData = true) 
             prisma.custom_params.findMany({
                 where: {
                     title: {
-                        in: ['MasterPath', 'ExecutablePath', 'ToolSeriesPath', 'DimensionPath', 'ToleranceFileName', 'OutputPath']
+                        in: ['MasterPath', 'ExecutablePath', 'ToolSeriesPath', 'DimensionPath', 'OutputPath']
                     }
                 }
             }),
