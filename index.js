@@ -497,6 +497,34 @@ app.post('/specifications/new', async (req, res) => {
     // req.body.ToolType later gets changed to the name to work with C#, so store it in a different var
     const toolId = req.body.ToolType;
 
+    // convert series inputs to inputs array
+    let seriesInputArray = [];
+    req.body.seriesInputs?.forEach(e => {
+        let value;
+        switch (e.type) {
+            case 'var':
+                value = req.body[e.name];
+                if (value !== undefined) {
+                    if (value.toString().startsWith('.') || value.toString().startsWith(',')) value = `0${value}`
+                }
+                seriesInputArray.push(value);
+                break;
+            case 'unit':
+            case 'cst':
+                seriesInputArray.push(e.value);
+                break;
+            case 'toggle':
+                value = req.body[e.name];
+                // if the toggle is set to true, we push the string in the value column, otherwise just an empty string
+                if (value !== undefined) value ? seriesInputArray.push(e.value) : seriesInputArray.push('');
+                break;
+            default:
+                seriesInputArray.push(req.body[e.name])
+        }
+    });
+    req.body.ToolSeriesInputs = seriesInputArray;
+    delete req.body.seriesInputs;
+
     // for blank tools, a bunch of parameters are not set. These need to be set in order for the controller not to crash
     // (any values set in SWController.cs need to be set)
     if (toolId === 2) {
