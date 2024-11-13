@@ -394,7 +394,7 @@ app.get('/tool/:tool_id/inputs', async (req, res) => {
 app.get('/specifications', async (req, res) => {
     let { p, u, s } = req.query;
     if (u === undefined) u = null;
-    let filterUser = !(u === 'null' || u === null | u === -1);
+    let filterUser = !(u === 'null' || u === null || u === -1 || u === '' || u === undefined);
     let search = s !== '';
     let page = parseInt(p);
     const specsPerPage = 15;
