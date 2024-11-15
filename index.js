@@ -1236,6 +1236,10 @@ app.get('/versions', async (req, res) => {
     return res.json(result);
 })
 
+app.get('/status', async (req, res) => {
+    return res.sendStatus(parseInt(process.env.STATUS));
+})
+
 app.listen(port, () => {
     console.log(`App listening on port ${port}`)
 })
