@@ -518,8 +518,16 @@ app.post('/specifications/new', async (req, res) => {
     const toolId = req.body.ToolType;
 
     // convert series inputs to inputs array
+    const seriesInputs = await prisma.series_inputs.findMany({
+        where: {
+            series_id: parseInt(req.body.ToolSeries),
+        },
+        orderBy: {
+            index: 'asc'
+        }
+    });
     let seriesInputArray = [];
-    req.body.seriesInputs?.forEach(e => {
+    seriesInputs.forEach(e => {
         let value;
         switch (e.type) {
             case 'var':
