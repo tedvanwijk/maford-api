@@ -151,6 +151,16 @@ app.post('/series/:tool_id/new', async (req, res) => {
     return res.status(201).json(result);
 })
 
+app.delete('/series/:series_id', async (req, res) => {
+    const result = await prisma.series.delete({
+        where: {
+            series_id: parseInt(req.params.series_id)
+        }
+    });
+
+    res.status(200).json(result);
+})
+
 app.get('/series/tool_id/:tool_id', async (req, res) => {
     const result = await prisma.series.findMany({
         where: {
