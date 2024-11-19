@@ -1180,6 +1180,16 @@ app.post('/centers', async (req, res) => {
     res.status(201).json(result);
 });
 
+app.delete('/centers/:center_type_id', async (req, res) => {
+    const result = await prisma.center_types.delete({
+        where: {
+            center_type_id: parseInt(req.params.center_type_id)
+        }
+    });
+
+    res.status(200).json(result);
+})
+
 function formatCenterTypeData(input) {
     let output = {};
     for (const [key, value] of Object.entries(input)) {
