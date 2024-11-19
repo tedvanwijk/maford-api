@@ -1183,10 +1183,11 @@ app.post('/centers', async (req, res) => {
 function formatCenterTypeData(input) {
     let output = {};
     for (const [key, value] of Object.entries(input)) {
-        const keySegments = key.split('_');
-        if (keySegments[1] === 'tolerance') {
+        let keySegments = key.split('_');
+        toleranceElement = keySegments.pop();
+        if (toleranceElement === 'tolerance') {
             // tolerance entry
-            dimensionName = keySegments[0];
+            dimensionName = keySegments.join('_');
             output[`${dimensionName}_upper`] = parseFloat(input[`${dimensionName}_upper`]);
             if (value === true) {
                 output[`${dimensionName}_lower`] = parseFloat(input[`${dimensionName}_lower`]);
