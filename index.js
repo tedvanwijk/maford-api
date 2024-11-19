@@ -845,20 +845,25 @@ app.get('/users', async (req, res) => {
 })
 
 app.post('/users/new', async (req, res) => {
-    const [_, result] = await prisma.$transaction([
-        prisma.users.create({
+    const result = await prisma.users.create({
             data: {
                 name: req.body.name,
                 admin: false
             }
-        }),
-        prisma.users.findMany({
-            where: {
-                active: true
-            }
-        })
-    ])
+        });
     return res.status(201).json(result);
+})
+
+app.put('/users/:user_id', async (req, res) => {
+    const result = await prisma.users.update({
+        where: {
+            user_id: parseInt(req.params.user_id)
+        },
+        data: {
+            name: req.body.name
+        }
+    });
+    return res.status(200).json(result);
 })
 
 app.delete('/users/:user_id', async (req, res) => {
