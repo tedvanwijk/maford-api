@@ -576,6 +576,12 @@ app.post('/specifications/new', async (req, res) => {
         req.body.ToolSeriesOutputRange = '';
     }
 
+    // for ems LOF should be equal to LOC
+    if (toolId === 0) req.body.LOF = req.body.LOC;
+
+    // for drills LOC should initially be equal to LOF
+    if (toolId === 1) req.body.LOC = req.body.LOF;
+
     // some tools might only have LOC or LOF defined. Set these equal so we don't have to deal with it later
     if (req.body.LOC === undefined) req.body.LOC = req.body.LOF;
     if (req.body.LOF === undefined) req.body.LOF = req.body.LOC;
