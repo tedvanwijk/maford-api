@@ -318,6 +318,9 @@ app.get('/tool/:tool_id/inputs', async (req, res) => {
                                             property_name: true
                                         }
                                     }
+                                },
+                                orderBy: {
+                                    disable: 'desc'
                                 }
                             }
                         }
@@ -395,6 +398,9 @@ app.get('/tool/:tool_id/inputs', async (req, res) => {
                                             property_name: true
                                         }
                                     }
+                                },
+                                orderBy: {
+                                    disable: 'desc'
                                 }
                             }
                         }
