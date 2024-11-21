@@ -208,11 +208,22 @@ app.get('/tools/:tool_id/inputs/by_type', async (req, res) => {
         select: {
             client_name: true,
             property_name: true,
-            type: true
+            type: true,
+            tool_input_categories: {
+                select: {
+                    display_title: true,
+                    name: true
+                }
+            }
         },
         orderBy: [
             {
                 type: 'asc'
+            },
+            {
+                tool_input_categories: {
+                    display_title: 'asc'
+                }
             },
             {
                 client_name: 'asc'
@@ -852,11 +863,11 @@ app.get('/users', async (req, res) => {
 
 app.post('/users/new', async (req, res) => {
     const result = await prisma.users.create({
-            data: {
-                name: req.body.name,
-                admin: false
-            }
-        });
+        data: {
+            name: req.body.name,
+            admin: false
+        }
+    });
     return res.status(201).json(result);
 })
 
