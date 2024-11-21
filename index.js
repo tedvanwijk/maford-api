@@ -219,9 +219,6 @@ app.get('/tools/:tool_id/inputs/by_type', async (req, res) => {
         orderBy: [
             {
                 type: 'asc'
-            },
-            {
-                client_name: 'asc'
             }
         ]
     });
