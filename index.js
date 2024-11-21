@@ -221,11 +221,6 @@ app.get('/tools/:tool_id/inputs/by_type', async (req, res) => {
                 type: 'asc'
             },
             {
-                tool_input_categories: {
-                    display_title: 'asc'
-                }
-            },
-            {
                 client_name: 'asc'
             }
         ]
@@ -240,6 +235,30 @@ app.get('/tools/:tool_id/inputs/by_type', async (req, res) => {
         if (!decimalEndFound) decimalInputs.push(result[i]);
         else toggleInputs.push(result[i]);
     }
+
+    decimalInputs.sort((a, b) => {
+        let aName = a.client_name;
+        if (a.tool_input_categories.name !== null) aName = `${a.tool_input_categories.display_title}: ${aName}`;
+        aName = aName.toLowerCase();
+        let bName = b.client_name;
+        if (b.tool_input_categories.name !== null) bName = `${b.tool_input_categories.display_title}: ${bName}`;
+        bName = bName.toLowerCase();
+
+        if (aName < bName) return -1;
+        else return 1;
+    });
+
+    toggleInputs.sort((a, b) => {
+        let aName = a.client_name;
+        if (a.tool_input_categories.name !== null) aName = `${a.tool_input_categories.display_title}: ${aName}`;
+        aName = aName.toLowerCase();
+        let bName = b.client_name;
+        if (b.tool_input_categories.name !== null) bName = `${b.tool_input_categories.display_title}: ${bName}`;
+        bName = bName.toLowerCase();
+
+        if (aName < bName) return -1;
+        else return 1;
+    });
 
     res.status(200).json({ decimalInputs, toggleInputs });
 })
