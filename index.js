@@ -439,49 +439,45 @@ app.get('/specifications', async (req, res) => {
     if (u === undefined || u === 'undefined') u = null;
     let filterUser = !(u === 'null' || u === null || u === -1 || u === '' || u === undefined);
     let search = s !== '';
+
+    let searchObj = {
+        OR: [
+            {
+                name: {
+                    contains: s
+                }
+            },
+            {
+                users: {
+                    name: {
+                        contains: s
+                    }
+                }
+            }
+        ]
+    }
+    let searchNumber = !isNaN(+s);
+    if (searchNumber) {
+        searchObj.OR.push({
+            specification_id: {
+                equals: parseInt(s)
+            }
+        });
+    }
+
     let page = parseInt(p);
     const specsPerPage = 15;
     const [count, specs, version] = await prisma.$transaction([
         prisma.specifications.count({
             where: {
                 ...(filterUser ? { user_id: parseInt(u) } : {}),
-                ...(search ? {
-                    OR: [
-                        {
-                            name: {
-                                contains: s
-                            }
-                        },
-                        {
-                            users: {
-                                name: {
-                                    contains: s
-                                }
-                            }
-                        }
-                    ]
-                } : {})
+                ...(search ? searchObj : {})
             }
         }),
         prisma.specifications.findMany({
             where: {
                 ...(filterUser ? { user_id: parseInt(u) } : {}),
-                ...(search ? {
-                    OR: [
-                        {
-                            name: {
-                                contains: s
-                            }
-                        },
-                        {
-                            users: {
-                                name: {
-                                    contains: s
-                                }
-                            }
-                        }
-                    ]
-                } : {})
+                ...(search ? searchObj : {})
             },
             select: {
                 specification_id: true,
