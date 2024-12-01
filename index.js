@@ -886,7 +886,7 @@ app.post('/users/new', async (req, res) => {
     const result = await prisma.users.create({
         data: {
             name: req.body.name,
-            admin: false
+            admin: req.body.admin
         }
     });
     return res.status(201).json(result);
@@ -898,7 +898,8 @@ app.put('/users/:user_id', async (req, res) => {
             user_id: parseInt(req.params.user_id)
         },
         data: {
-            name: req.body.name
+            name: req.body.name,
+            admin: req.body.admin
         }
     });
     return res.status(200).json(result);
