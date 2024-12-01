@@ -493,7 +493,8 @@ app.get('/specifications', async (req, res) => {
                     select: {
                         name: true
                     }
-                }
+                },
+                date_created: true
             },
             take: specsPerPage,
             skip: specsPerPage * page,
@@ -628,7 +629,8 @@ app.post('/specifications/new', async (req, res) => {
                 path: '',
                 error: '',
                 tool_id: parseInt(toolId),
-                version_id: parseInt(process.env.VERSION_ID)
+                version_id: parseInt(process.env.VERSION_ID),
+                date_created: new Date()
             }
         })
         return res.status(200).json(result)
@@ -644,7 +646,8 @@ app.post('/specifications/new', async (req, res) => {
                 path: '',
                 error: '',
                 tool_id: parseInt(toolId),
-                version_id: parseInt(process.env.VERSION_ID)
+                version_id: parseInt(process.env.VERSION_ID),
+                date_created: new Date()
             }
         });
         req.body.ToolType = additionalSpecParameters.ToolTypeName;

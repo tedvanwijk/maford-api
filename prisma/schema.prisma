@@ -118,6 +118,7 @@ model specifications {
   error            String
   version_id       Int
   tool_id          Int             @default(0)
+  date_created     DateTime?
   reports          reports[]
   users            users           @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_id")
   versions         version_history @relation(fields: [version_id], references: [version_id], onDelete: SetDefault, onUpdate: SetDefault, map: "fk_version_id")
