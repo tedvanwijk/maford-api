@@ -878,8 +878,16 @@ app.get('/users', async (req, res) => {
             active: true
         }
     })
+    return res.status(200).json(users);
+})
 
-    res.json(users);
+app.get('/users/:user_id', async (req, res) => {
+    const user = await prisma.users.findUnique({
+        where: {
+            user_id: parseInt(req.params.user_id)
+        }
+    });
+    return res.status(200).json(user);
 })
 
 app.post('/users/new', async (req, res) => {
