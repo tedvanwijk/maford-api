@@ -29,6 +29,7 @@ model series {
   tools                       tools           @relation(fields: [tool_id], references: [tool_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_tool_id")
   catalog_index_same_as_index Boolean         @default(true)
   catalog_updated             DateTime?
+  active                      Boolean         @default(true)
   series_inputs               series_inputs[]
   catalog_tools               catalog_tools[]
 }

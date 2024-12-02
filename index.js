@@ -152,20 +152,34 @@ app.post('/series/:tool_id/new', async (req, res) => {
 })
 
 app.delete('/series/:series_id', async (req, res) => {
-    const result = await prisma.series.delete({
-        where: {
-            series_id: parseInt(req.params.series_id)
-        }
-    });
+    const result = await prisma.$transaction([
+        prisma.series.update({
+            where: {
+                series_id: parseInt(req.params.series_id)
+            },
+            data: {
+                active: false,
+                catalog_updated: null
+            }
+        }),
+        prisma.catalog_tools.deleteMany({
+            where: {
+                series_id: parseInt(req.params.series_id)
+            }
+        })
+    ]);
 
     res.status(200).json(result);
 })
 
 app.get('/series/tool_id/:tool_id', async (req, res) => {
+    const active = req.query.active === 'true';
+    let filter = {
+        tool_id: parseInt(req.params.tool_id)
+    };
+    if (active) filter.active = active;
     const result = await prisma.series.findMany({
-        where: {
-            tool_id: parseInt(req.params.tool_id)
-        },
+        where: filter,
         include: {
             _count: {
                 select: {
