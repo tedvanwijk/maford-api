@@ -207,7 +207,15 @@ app.get('/series/:series_id/inputs', async (req, res) => {
 
 // #region tools
 app.get('/tools', async (req, res) => {
-    const result = await prisma.tools.findMany();
+    const editable = req.query.editable === 'true';
+    const result = await prisma.tools.findMany({
+        where: (editable ? {
+            name: {
+                notIn: ['Blank']
+            }
+        } : {}
+        )
+    });
     res.status(200).json(result);
 })
 
