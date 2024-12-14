@@ -64,6 +64,7 @@ model tools {
   tool_input_categories tool_input_categories[]
   tool_inputs           tool_inputs[]
   specifications        specifications[]
+  order                 Int?
 }
 
 model tool_inputs {
