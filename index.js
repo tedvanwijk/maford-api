@@ -696,11 +696,11 @@ app.post('/specifications/new', async (req, res) => {
 
 async function getCenterData(body) {
     const centerTypesOrStatement = [];
-    if (body.Center.UpperType !== '' && body.Center.UpperType !== undefined) centerTypesOrStatement.push({
-        center_type_id: parseInt(body.Center.UpperType)
+    if (body.Center.UpperCenterType !== '-1' && body.Center.UpperCenterType !== undefined) centerTypesOrStatement.push({
+        center_type_id: parseInt(body.Center.UpperCenterType)
     });
-    if (body.Center.LowerType !== '' && body.Center.LowerType !== undefined) centerTypesOrStatement.push({
-        center_type_id: parseInt(body.Center.LowerType)
+    if (body.Center.LowerCenterType !== '-1' && body.Center.LowerCenterType !== undefined) centerTypesOrStatement.push({
+        center_type_id: parseInt(body.Center.LowerCenterType)
     });
 
     let result;
@@ -716,7 +716,7 @@ async function getCenterData(body) {
     // TODO: implement boss diameter and length in db
     // TODO: actually implement tolerances
     if (body.Center.UpperCenterType !== '-1' && body.Center.UpperCenterType !== undefined) {
-        const centerData = result.filter(e => e.center_type_id === parseInt(body.Center.UpperType))[0];
+        const centerData = result.filter(e => e.center_type_id === parseInt(body.Center.UpperCenterType))[0];
         body.Center.UpperCenter = true;
         body.Center.UpperCenterDimensions = {};
         body.Center.UpperCenterDimensions.A1Min = centerData.a1_lower;
@@ -739,7 +739,7 @@ async function getCenterData(body) {
     }
 
     if (body.Center.LowerCenterType !== '-1' && body.Center.LowerCenterType !== undefined) {
-        const centerData = result.filter(e => e.center_type_id === parseInt(body.Center.LowerType))[0];
+        const centerData = result.filter(e => e.center_type_id === parseInt(body.Center.LowerCenterType))[0];
         body.Center.LowerCenter = true;
         body.Center.LowerCenterDimensions = {};
         body.Center.LowerCenterDimensions.A1Min = centerData.a1_lower;
