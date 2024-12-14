@@ -214,7 +214,10 @@ app.get('/tools', async (req, res) => {
                 notIn: ['Blank']
             }
         } : {}
-        )
+        ),
+        orderBy: {
+            order: 'asc'
+        }
     });
     res.status(200).json(result);
 })
