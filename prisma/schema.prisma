@@ -20,7 +20,7 @@ model series {
   series_id                   Int             @id @default(autoincrement())
   name                        String          @unique
   flute_count                 Int
-  helix_angle                 Int
+  helix_angle                 Int?
   straight_flute              Boolean         @default(false)
   left_hand_spiral            Boolean         @default(false)
   tool_series_file_name       String
