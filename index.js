@@ -850,7 +850,7 @@ async function getAdditionalSpecificationParameters(data, getSeriesData = true) 
         ShankType
     };
 
-    let result = { ...customParams, ...computedToolParameters, ToolTypeName: toolData.name }
+    let result = { ...customParams, ...computedToolParameters, ToolTypeName: toolData.name, ImagePath: process.env.IMAGE_PATH }
     return getSeriesData ? { ...result, ...seriesData } : result;
 }
 
