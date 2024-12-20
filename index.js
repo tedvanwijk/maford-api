@@ -712,9 +712,6 @@ async function getCenterData(body) {
         })
     }
 
-
-    // TODO: implement boss diameter and length in db
-    // TODO: actually implement tolerances
     if (body.Center.UpperCenterType !== '-1' && body.Center.UpperCenterType !== undefined) {
         const centerData = result.filter(e => e.center_type_id === parseInt(body.Center.UpperCenterType))[0];
         body.Center.UpperCenter = true;
@@ -788,7 +785,7 @@ async function getAdditionalSpecificationParameters(data, getSeriesData = true) 
     // both the tool series information (flute count, etc.) and custom parameters (master path, etc.) can change at any time, so look up these values when a specification is about to be generated
     let customParams, seriesData, toolData;
 
-    if (getSeriesData) {
+    if (getSeriesData && parseInt(data.ToolSeries) !== -1) {
         [customParams, seriesData, toolData] = await prisma.$transaction([
             prisma.custom_params.findMany({
                 where: {
@@ -800,6 +797,12 @@ async function getAdditionalSpecificationParameters(data, getSeriesData = true) 
             prisma.series.findUnique({
                 where: {
                     series_id: parseInt(data.ToolSeries)
+                },
+                select: {
+                    name: true,
+                    tool_series_file_name: true,
+                    tool_series_input_range: true,
+                    tool_series_output_range: true,
                 }
             }),
             prisma.tools.findUnique({
@@ -807,7 +810,39 @@ async function getAdditionalSpecificationParameters(data, getSeriesData = true) 
                     tool_id: parseInt(data.ToolType)
                 }
             })
-        ])
+        ]);
+
+        // these parameters can be edited by the user, so they are passed from the client
+        seriesData.flute_count = data.flute_count;
+        seriesData.helix_angle = data.helix_angle;
+        seriesData.straight_flute = data.straight_flute;
+        seriesData.left_hand_spiral = data.left_hand_spiral;
+    } else if (getSeriesData) {
+        [customParams, toolData] = await prisma.$transaction([
+            prisma.custom_params.findMany({
+                where: {
+                    title: {
+                        in: ['MasterPath', 'ExecutablePath', 'ToolSeriesPath', 'DimensionPath', 'OutputPath']
+                    }
+                }
+            }),
+            prisma.tools.findUnique({
+                where: {
+                    tool_id: parseInt(data.ToolType)
+                }
+            })
+        ]);
+
+        // user has manually set series params without selecting an actual series
+        seriesData = {
+            flute_count: data.flute_count,
+            helix_angle: data.helix_angle,
+            straight_flute: data.straight_flute,
+            left_hand_spiral: data.left_hand_spiral,
+            tool_series_file_name: '',
+            tool_series_input_range: '',
+            tool_series_output_range: ''
+        }
     } else {
         [customParams, toolData] = await prisma.$transaction([
             prisma.custom_params.findMany({
