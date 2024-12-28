@@ -679,8 +679,8 @@ app.post('/specifications/new', async (req, res) => {
         const specData = {
             ...additionalSpecParameters,
             ...req.body,
-            PartFileName: `TOOL_V2_GENERATED_${result.specification_id}`,
-            DrawingFileName: `DRAWING_V2_GENERATED_${result.specification_id}`,
+            PartFileName: `${result.specification_id}_PART`,
+            DrawingFileName: `${result.specification_id}`,
             SpecificationNumber: result.specification_id
         };
         let parameterString = btoa(JSON.stringify(specData));
@@ -906,8 +906,8 @@ async function checkPendingSpecifications() {
     const specData = {
         ...additionalSpecParameters,
         ...specDataExecutable,
-        PartFileName: `TOOL_V2_GENERATED_${spec.specification_id}`,
-        DrawingFileName: `DRAWING_V2_GENERATED_${spec.specification_id}`,
+        PartFileName: `${spec.specification_id}_PART`,
+        DrawingFileName: `${spec.specification_id}`,
         SpecificationNumber: spec.specification_id
     };
     const parameterString = btoa(JSON.stringify(specData));
