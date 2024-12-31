@@ -76,11 +76,9 @@ model tool_inputs {
   tool_input_category_id        Int
   group                         Int?
   order                         Int?
-  required                      Boolean
   options                       String[]               @default([])
   min_value                     Float?
   max_value                     Float?
-  step_value                    Float?
   tool_input_dependency_rules_1 tool_input_rules[]     @relation("tool_input_dependency_id_1")
   tool_input_dependency_rules_2 tool_input_rules[]     @relation("tool_input_dependency_id_2")
   tool_input_rules              tool_input_rules[]     @relation("tool_input_id")
