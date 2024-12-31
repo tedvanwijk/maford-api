@@ -790,7 +790,7 @@ async function getAdditionalSpecificationParameters(data, getSeriesData = true) 
             prisma.custom_params.findMany({
                 where: {
                     title: {
-                        in: ['MasterPath', 'ExecutablePath', 'ToolSeriesPath', 'DimensionPath', 'OutputPath']
+                        in: ['MasterPath', 'ExecutablePath', 'ToolSeriesPath', 'DimensionPath', 'OutputPath', 'PartFileTypes', 'DrawingFileTypes']
                     }
                 }
             }),
@@ -822,7 +822,7 @@ async function getAdditionalSpecificationParameters(data, getSeriesData = true) 
             prisma.custom_params.findMany({
                 where: {
                     title: {
-                        in: ['MasterPath', 'ExecutablePath', 'ToolSeriesPath', 'DimensionPath', 'OutputPath']
+                        in: ['MasterPath', 'ExecutablePath', 'ToolSeriesPath', 'DimensionPath', 'OutputPath', 'PartFileTypes', 'DrawingFileTypes']
                     }
                 }
             }),
@@ -848,7 +848,7 @@ async function getAdditionalSpecificationParameters(data, getSeriesData = true) 
             prisma.custom_params.findMany({
                 where: {
                     title: {
-                        in: ['MasterPath', 'ExecutablePath', 'ToolSeriesPath', 'DimensionPath', 'OutputPath']
+                        in: ['MasterPath', 'ExecutablePath', 'ToolSeriesPath', 'DimensionPath', 'OutputPath', 'PartFileTypes', 'DrawingFileTypes']
                     }
                 }
             }),
@@ -866,7 +866,10 @@ async function getAdditionalSpecificationParameters(data, getSeriesData = true) 
             ...total,
             [e.title]: e.value
         }
-    }, {})
+    }, {});
+
+    customParams.PartFileTypes = customParams.PartFileTypes.split(',');
+    customParams.DrawingFileTypes = customParams.DrawingFileTypes.split(',');
 
     if (getSeriesData) {
         for (const [key, value] of Object.entries(seriesData)) {
@@ -999,7 +1002,15 @@ app.delete('/users/:user_id', async (req, res) => {
 // #region custom_params
 
 app.get('/custom_params', async (req, res) => {
-    const result = await prisma.custom_params.findMany({});
+    let types = req.query.types;
+    types = types.split(',');
+    const result = await prisma.custom_params.findMany({
+        where: {
+            title: {
+                in: types
+            }
+        }
+    });
     res.status(200).json(result);
 })
 
