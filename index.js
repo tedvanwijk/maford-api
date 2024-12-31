@@ -303,7 +303,7 @@ app.get('/tool/:tool_id/inputs', async (req, res) => {
                     ]
                 },
                 orderBy: {
-                    common: 'asc'
+                    order: 'asc'
                 },
                 include: {
                     tool_inputs: {
@@ -383,7 +383,7 @@ app.get('/tool/:tool_id/inputs', async (req, res) => {
                     ]
                 },
                 orderBy: {
-                    common: 'asc'
+                    order: 'asc'
                 },
                 include: {
                     tool_inputs: {
