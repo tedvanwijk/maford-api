@@ -628,6 +628,9 @@ app.post('/specifications/new', async (req, res) => {
     req.body.PartFileTypes = convertToStringArray(req.body.filetypes.part);
     req.body.DrawingFileTypes = convertToStringArray(req.body.filetypes.drawing);
 
+    // add path to drawingtypse
+    req.body.Prp.DrawingTypeFilePath = process.env.DRAWINGTYPE_PATH;
+
     // for blank tools, a bunch of parameters are not set. These need to be set in order for the controller not to crash
     // (any values set in SWController.cs need to be set)
     if (toolId === 2) {
