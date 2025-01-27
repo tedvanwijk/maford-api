@@ -618,6 +618,16 @@ app.post('/specifications/new', async (req, res) => {
     req.body.ToolSeriesInputs = seriesInputArray;
     delete req.body.seriesInputs;
 
+    // create filetypes arrays
+    function convertToStringArray(obj) {
+        let arr = [];
+        for (const [key, value] of Object.entries(obj)) if (value) arr.push(key);
+        return arr;
+    }
+
+    req.body.PartFileTypes = convertToStringArray(req.body.filetypes.part);
+    req.body.DrawingFileTypes = convertToStringArray(req.body.filetypes.drawing);
+
     // for blank tools, a bunch of parameters are not set. These need to be set in order for the controller not to crash
     // (any values set in SWController.cs need to be set)
     if (toolId === 2) {
@@ -790,7 +800,7 @@ async function getAdditionalSpecificationParameters(data, getSeriesData = true) 
             prisma.custom_params.findMany({
                 where: {
                     title: {
-                        in: ['MasterPath', 'ExecutablePath', 'ToolSeriesPath', 'DimensionPath', 'OutputPath', 'PartFileTypes', 'DrawingFileTypes']
+                        in: ['MasterPath', 'ExecutablePath', 'ToolSeriesPath', 'DimensionPath', 'OutputPath']
                     }
                 }
             }),
@@ -822,7 +832,7 @@ async function getAdditionalSpecificationParameters(data, getSeriesData = true) 
             prisma.custom_params.findMany({
                 where: {
                     title: {
-                        in: ['MasterPath', 'ExecutablePath', 'ToolSeriesPath', 'DimensionPath', 'OutputPath', 'PartFileTypes', 'DrawingFileTypes']
+                        in: ['MasterPath', 'ExecutablePath', 'ToolSeriesPath', 'DimensionPath', 'OutputPath']
                     }
                 }
             }),
@@ -848,7 +858,7 @@ async function getAdditionalSpecificationParameters(data, getSeriesData = true) 
             prisma.custom_params.findMany({
                 where: {
                     title: {
-                        in: ['MasterPath', 'ExecutablePath', 'ToolSeriesPath', 'DimensionPath', 'OutputPath', 'PartFileTypes', 'DrawingFileTypes']
+                        in: ['MasterPath', 'ExecutablePath', 'ToolSeriesPath', 'DimensionPath', 'OutputPath']
                     }
                 }
             }),
@@ -867,9 +877,6 @@ async function getAdditionalSpecificationParameters(data, getSeriesData = true) 
             [e.title]: e.value
         }
     }, {});
-
-    customParams.PartFileTypes = customParams.PartFileTypes.split(',');
-    customParams.DrawingFileTypes = customParams.DrawingFileTypes.split(',');
 
     if (getSeriesData) {
         for (const [key, value] of Object.entries(seriesData)) {
