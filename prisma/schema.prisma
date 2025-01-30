@@ -18,7 +18,7 @@ model users {
 
 model series {
   series_id                   Int             @id @default(autoincrement())
-  name                        String          @unique
+  name                        String
   flute_count                 Int
   helix_angle                 Int?
   straight_flute              Boolean         @default(false)
